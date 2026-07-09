@@ -1,0 +1,641 @@
+<style>
+    .hi-control {
+        margin-bottom: 20px;
+    }
+
+    .hide-status {
+        display: inline-block;
+        padding: 12px 20px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+        font-weight: bold;
+        font-size: 14px;
+    }
+
+    .hide-status.active {
+        background-color: #4CAF50;
+        color: white;
+    }
+
+    .hide-status.inactive {
+        background-color: #f44336;
+        color: white;
+    }
+
+    .launcher-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .launcher-item {
+        background-color: #f9f9f9;
+        border-left: 4px solid #2196F3;
+        padding: 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .launcher-item:hover {
+        background-color: #e3f2fd;
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .launcher-item.detected {
+        border-left-color: #4CAF50;
+        background-color: #f1f8f6;
+    }
+
+    .launcher-name {
+        font-weight: bold;
+        font-size: 14px;
+        color: #333;
+    }
+
+    .launcher-package {
+        font-size: 11px;
+        color: #999;
+        margin-top: 4px;
+        word-break: break-all;
+    }
+
+    .status-indicator {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 6px;
+    }
+
+    .status-indicator.active {
+        background-color: #4CAF50;
+    }
+
+    .status-indicator.hidden {
+        background-color: #2196F3;
+    }
+
+    .activation-method {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .method-button {
+        padding: 10px;
+        border: 2px solid #ddd;
+        border-radius: 4px;
+        background-color: #f9f9f9;
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.3s;
+        font-size: 13px;
+        font-weight: bold;
+    }
+
+    .method-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .method-button.active {
+        background-color: #2196F3;
+        color: white;
+        border-color: #1976D2;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+        font-size: 12px;
+    }
+
+    .data-table th {
+        background-color: #2196F3;
+        color: white;
+        padding: 10px;
+        text-align: left;
+    }
+
+    .data-table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+    }
+
+    .data-table tr:hover {
+        background-color: #f9f9f9;
+    }
+
+    .log-entry {
+        background-color: #f5f5f5;
+        border-left: 4px solid #2196F3;
+        padding: 12px;
+        margin-bottom: 10px;
+        border-radius: 4px;
+        font-size: 12px;
+    }
+
+    .log-entry.success {
+        border-left-color: #4CAF50;
+        background-color: #f1f8f6;
+    }
+
+    .log-entry.error {
+        border-left-color: #f44336;
+        background-color: #ffebee;
+    }
+
+    .log-timestamp {
+        font-size: 10px;
+        color: #999;
+        margin-top: 4px;
+    }
+
+    .alert-box {
+        background-color: #fff3cd;
+        border: 1px solid #ffc107;
+        border-radius: 4px;
+        padding: 12px;
+        margin-bottom: 15px;
+        color: #856404;
+    }
+
+    .alert-box.success {
+        background-color: #d4edda;
+        border-color: #28a745;
+        color: #155724;
+    }
+
+    .alert-box.danger {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+    }
+
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin: 15px 0;
+    }
+
+    .stat-box {
+        background-color: #f5f5f5;
+        border-left: 4px solid #2196F3;
+        padding: 12px;
+        border-radius: 4px;
+    }
+
+    .stat-value {
+        font-size: 24px;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .stat-label {
+        font-size: 12px;
+        color: #666;
+        margin-top: 4px;
+    }
+
+    .input-group {
+        margin-top: 15px;
+        padding: 12px;
+        background-color: #f9f9f9;
+        border-radius: 4px;
+    }
+
+    .input-group label {
+        font-weight: bold;
+        font-size: 12px;
+        display: block;
+        margin-bottom: 8px;
+        color: #333;
+    }
+
+    .input-group input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 12px;
+        box-sizing: border-box;
+    }
+
+    .input-group button {
+        margin-top: 8px;
+        padding: 8px 12px;
+        background-color: #2196F3;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .input-group button:hover {
+        background-color: #1976D2;
+    }
+</style>
+
+<div class="ui segment">
+    <h2 class="ui dividing header">
+        <i class="icon eye slash"></i> Ocultação de Ícone Avançada
+        <span style="font-size: 12px; margin-left: 10px; background: #2196F3; color: white; padding: 4px 8px; border-radius: 3px;">Invisível</span>
+    </h2>
+
+    <!-- Alert -->
+    <div id="alertMessage" style="display: none;"></div>
+
+    <!-- Hide Status -->
+    <div class="hide-status inactive" id="hideStatus">
+        ● Ocultação desativada
+    </div>
+
+    <!-- Alert Box -->
+    <div class="alert-box">
+        <strong>ℹ️ Informação:</strong> Remove o ícone da gaveta de aplicativos e opera como serviço invisível em segundo plano.
+    </div>
+
+    <!-- Control Panel -->
+    <div class="hi-control">
+        <h4>Controle Principal</h4>
+        <button class="ui button red" id="enableHide">
+            <i class="icon eye slash"></i> Ativar Ocultação
+        </button>
+        <button class="ui button green" id="disableHide">
+            <i class="icon eye"></i> Desativar Ocultação
+        </button>
+        <button class="ui button blue" id="removeIcon">
+            <i class="icon trash"></i> Remover Ícone
+        </button>
+        <button class="ui button purple" id="detectLaunchers">
+            <i class="icon search"></i> Detectar Launchers
+        </button>
+    </div>
+
+    <!-- Background Service -->
+    <div class="hi-control">
+        <h4>Serviço de Segundo Plano</h4>
+        <button class="ui button orange" id="enableBackgroundService">
+            <i class="icon cog"></i> Ativar Serviço em Background
+        </button>
+        <p style="font-size: 11px; color: #999; margin-top: 10px;">Status: <strong id="backgroundServiceStatus">Inativo</strong></p>
+    </div>
+
+    <!-- Statistics -->
+    <div class="hi-control">
+        <h4>Estatísticas de Ocultação</h4>
+        <div class="stats-row">
+            <div class="stat-box">
+                <div class="stat-value" id="launchersDetected">0</div>
+                <div class="stat-label">Launchers Detectados</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="successfulHides">0</div>
+                <div class="stat-label">Ocultações Bem-sucedidas</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="failedHides">0</div>
+                <div class="stat-label">Falhas de Ocultação</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activation Methods -->
+    <div class="hi-control">
+        <h4>Método de Ativação</h4>
+        <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Escolha como o app será ativado:</p>
+        <div class="activation-method">
+            <button class="method-button" data-method="none" id="btn_none">
+                <i class="icon ban"></i> Nenhum
+            </button>
+            <button class="method-button" data-method="code" id="btn_code">
+                <i class="icon keyboard"></i> Código Secreto
+            </button>
+            <button class="method-button" data-method="sms" id="btn_sms">
+                <i class="icon sms"></i> SMS
+            </button>
+        </div>
+
+        <!-- Code Activation -->
+        <div class="input-group" id="codeInput" style="display: none;">
+            <label>Código de Ativação:</label>
+            <input type="text" id="activationCode" placeholder="Digite o código secreto" value="secret123">
+            <button onclick="setActivationCode()">Definir Código</button>
+        </div>
+
+        <!-- SMS Activation -->
+        <div class="input-group" id="smsInput" style="display: none;">
+            <label>Frase de Ativação por SMS:</label>
+            <input type="text" id="smsActivationPhrase" placeholder="Digite a frase" value="activate_l3mon">
+            <button onclick="setSmsActivation()">Definir SMS</button>
+        </div>
+
+        <p style="font-size: 11px; color: #999; margin-top: 10px;">Método Atual: <strong id="currentMethod">Nenhum</strong></p>
+    </div>
+
+    <!-- Detected Launchers -->
+    <div class="hi-control">
+        <h4>Launchers do Sistema</h4>
+        <div class="launcher-grid" id="launcherGrid">
+            <p style="color: #999; font-style: italic; grid-column: 1 / -1;">Clique em "Detectar Launchers" para verificar...</p>
+        </div>
+    </div>
+
+    <!-- Hide Log -->
+    <div class="hi-control">
+        <h4>Log de Operações de Ocultação</h4>
+        <button class="ui button red" id="clearLog">
+            <i class="icon trash"></i> Limpar Log
+        </button>
+        <div id="hideLog" style="max-height: 400px; overflow-y: auto; margin-top: 15px;">
+            <p style="color: #999; font-style: italic;">Nenhuma operação registrada</p>
+        </div>
+    </div>
+
+    <!-- Status Details Table -->
+    <div class="hi-control">
+        <h4>Detalhes de Status</h4>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 35%;">Status/Propriedade</th>
+                    <th style="width: 35%;">Valor</th>
+                    <th style="width: 30%;">Estado</th>
+                </tr>
+            </thead>
+            <tbody id="statusTableBody">
+                <tr>
+                    <td colspan="3" style="text-align: center; color: #999;">Carregando...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    let hideData = <%- JSON.stringify(pageData) %>;
+    const deviceID = '<%= deviceID %>';
+    const baseURL = '<%= baseURL %>';
+
+    document.addEventListener('DOMContentLoaded', function() {
+        updateUI();
+        initializeMethodButtons();
+        setInterval(updateUI, 2000);
+    });
+
+    function initializeMethodButtons() {
+        document.querySelectorAll('.method-button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const method = this.dataset.method;
+                setActivationMethod(method);
+            });
+        });
+    }
+
+    function setActivationMethod(method) {
+        document.querySelectorAll('.method-button').forEach(btn => btn.classList.remove('active'));
+        document.getElementById('btn_' + method).classList.add('active');
+        
+        document.getElementById('codeInput').style.display = 'none';
+        document.getElementById('smsInput').style.display = 'none';
+        
+        if (method === 'code') {
+            document.getElementById('codeInput').style.display = 'block';
+        } else if (method === 'sms') {
+            document.getElementById('smsInput').style.display = 'block';
+        }
+        
+        document.getElementById('currentMethod').textContent = 
+            method === 'none' ? 'Nenhum' : 
+            method === 'code' ? 'Código Secreto' : 
+            method === 'sms' ? 'SMS' : method;
+    }
+
+    function setActivationCode() {
+        const code = document.getElementById('activationCode').value;
+        fetch(`/manage/${deviceID}/hi/set_activation_method/code`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: code })
+        }).then(r => r.json()).then(data => {
+            if (!data.error) {
+                showAlert('Código de ativação definido: ' + code, 'success');
+                updateUI();
+            }
+        });
+    }
+
+    function setSmsActivation() {
+        const phrase = document.getElementById('smsActivationPhrase').value;
+        fetch(`/manage/${deviceID}/hi/set_activation_method/sms`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phrase: phrase })
+        }).then(r => r.json()).then(data => {
+            if (!data.error) {
+                showAlert('Ativação por SMS configurada: ' + phrase, 'success');
+                updateUI();
+            }
+        });
+    }
+
+    document.getElementById('enableHide').addEventListener('click', function() {
+        fetch(`/manage/${deviceID}/hi/enable_hide`, { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.error) {
+                    showAlert('Ocultação de ícone ativada!', 'success');
+                    updateUI();
+                }
+            });
+    });
+
+    document.getElementById('disableHide').addEventListener('click', function() {
+        fetch(`/manage/${deviceID}/hi/disable_hide`, { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.error) {
+                    showAlert('Ocultação de ícone desativada', 'success');
+                    updateUI();
+                }
+            });
+    });
+
+    document.getElementById('removeIcon').addEventListener('click', function() {
+        fetch(`/manage/${deviceID}/hi/remove_icon`, { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.error) {
+                    showAlert('Ícone removido da gaveta de aplicativos!', 'success');
+                    updateUI();
+                }
+            });
+    });
+
+    document.getElementById('enableBackgroundService').addEventListener('click', function() {
+        fetch(`/manage/${deviceID}/hi/enable_background_service`, { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.error) {
+                    showAlert('Serviço de segundo plano ativado!', 'success');
+                    updateUI();
+                }
+            });
+    });
+
+    document.getElementById('detectLaunchers').addEventListener('click', function() {
+        fetch(`/manage/${deviceID}/hi/detect_launchers`, { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.error) {
+                    showAlert('Detectando launchers...', 'success');
+                    updateUI();
+                }
+            });
+    });
+
+    document.getElementById('clearLog').addEventListener('click', function() {
+        if (confirm('Tem certeza que deseja limpar o log?')) {
+            fetch(`/manage/${deviceID}/hi/log`, { method: 'DELETE' })
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.error) {
+                        hideData.hideLog = [];
+                        updateUI();
+                        showAlert('Log limpado', 'success');
+                    }
+                });
+        }
+    });
+
+    function updateUI() {
+        fetch(`/manage/${deviceID}/hi/data`)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.error) {
+                    hideData = data.data;
+                    updateHideStatus();
+                    updateStatistics();
+                    updateDetectedLaunchers();
+                    updateStatusTable();
+                    updateHideLog();
+                    updateCurrentMethod();
+                    updateBackgroundServiceStatus();
+                }
+            });
+    }
+
+    function updateHideStatus() {
+        const status = document.getElementById('hideStatus');
+        if (hideData.hideEnabled) {
+            status.textContent = '● Ocultação ATIVA (Ícone removido)';
+            status.classList.remove('inactive');
+            status.classList.add('active');
+        } else {
+            status.textContent = '● Ocultação desativada';
+            status.classList.remove('active');
+            status.classList.add('inactive');
+        }
+    }
+
+    function updateStatistics() {
+        const successCount = hideData.hideLog.filter(log => log.success).length;
+        const failureCount = hideData.hideLog.filter(log => !log.success).length;
+        
+        document.getElementById('launchersDetected').textContent = hideData.detectedLaunchers.length;
+        document.getElementById('successfulHides').textContent = successCount;
+        document.getElementById('failedHides').textContent = failureCount;
+    }
+
+    function updateDetectedLaunchers() {
+        const grid = document.getElementById('launcherGrid');
+        if (hideData.detectedLaunchers.length === 0) {
+            grid.innerHTML = '<p style="color: #999; font-style: italic; grid-column: 1 / -1;">Nenhum launcher detectado</p>';
+            return;
+        }
+        
+        grid.innerHTML = hideData.detectedLaunchers.map(launcher => `
+            <div class="launcher-item detected">
+                <div class="launcher-name">
+                    <span class="status-indicator ${launcher.active ? 'active' : 'hidden'}"></span>${launcher.name}
+                </div>
+                <div class="launcher-package">${launcher.package}</div>
+                <div class="launcher-package" style="margin-top: 6px; color: #666;">Status: ${launcher.active ? 'Ativo' : 'Inativo'}</div>
+            </div>
+        `).join('');
+    }
+
+    function updateStatusTable() {
+        const tbody = document.getElementById('statusTableBody');
+        const rows = [
+            { label: 'Ocultação Ativada', value: hideData.hideEnabled ? 'Sim' : 'Não', state: hideData.hideEnabled ? '✓ ATIVO' : 'INATIVO' },
+            { label: 'Ícone Removido', value: hideData.launcherIconRemoved ? 'Sim' : 'Não', state: hideData.launcherIconRemoved ? '✓ REMOVIDO' : '-' },
+            { label: 'Icon Hidden', value: hideData.iconHidden ? 'Sim' : 'Não', state: hideData.iconHidden ? '✓ OCULTO' : '-' },
+            { label: 'Serviço em Background', value: hideData.backgroundServiceActive ? 'Ativo' : 'Inativo', state: hideData.backgroundServiceActive ? '✓ ATIVO' : 'INATIVO' },
+            { label: 'Método de Ativação', value: hideData.activationMethod, state: hideData.activationMethod === 'code' ? '🔐 CÓDIGO' : hideData.activationMethod === 'sms' ? '📱 SMS' : '-' },
+            { label: 'Launcher Principal', value: hideData.launcherName, state: 'Configurado' }
+        ];
+        
+        tbody.innerHTML = rows.map(row => `
+            <tr>
+                <td><strong>${row.label}</strong></td>
+                <td><code style="font-size: 11px;">${row.value}</code></td>
+                <td><span class="ui label" style="font-size: 11px;">${row.state}</span></td>
+            </tr>
+        `).join('');
+    }
+
+    function updateHideLog() {
+        const container = document.getElementById('hideLog');
+        if (hideData.hideLog.length === 0) {
+            container.innerHTML = '<p style="color: #999; font-style: italic;">Nenhuma operação registrada</p>';
+            return;
+        }
+        
+        container.innerHTML = hideData.hideLog.slice().reverse().map(log => `
+            <div class="log-entry ${log.success ? 'success' : 'error'}">
+                <strong>${log.action}</strong> - ${log.details || ''}<br>
+                <small>Método: ${log.method || 'N/A'}</small>
+                <div class="log-timestamp">${new Date(log.timestamp).toLocaleString('pt-BR')}</div>
+            </div>
+        `).join('');
+    }
+
+    function updateCurrentMethod() {
+        document.querySelectorAll('.method-button').forEach(btn => btn.classList.remove('active'));
+        if (hideData.activationMethod !== 'none') {
+            const btn = document.getElementById('btn_' + hideData.activationMethod);
+            if (btn) btn.classList.add('active');
+            document.getElementById('currentMethod').textContent = 
+                hideData.activationMethod === 'code' ? 'Código Secreto' : 
+                hideData.activationMethod === 'sms' ? 'SMS' : 'Nenhum';
+        } else {
+            document.getElementById('currentMethod').textContent = 'Nenhum';
+        }
+    }
+
+    function updateBackgroundServiceStatus() {
+        const status = document.getElementById('backgroundServiceStatus');
+        status.textContent = hideData.backgroundServiceActive ? 'ATIVO ✓' : 'Inativo';
+        status.style.color = hideData.backgroundServiceActive ? '#4CAF50' : '#999';
+    }
+
+    function showAlert(message, type) {
+        const alertDiv = document.getElementById('alertMessage');
+        alertDiv.className = 'alert-box ' + (type === 'success' ? 'success' : 'danger');
+        alertDiv.textContent = message;
+        alertDiv.style.display = 'block';
+        
+        setTimeout(() => {
+            alertDiv.style.display = 'none';
+        }, 3000);
+    }
+</script>

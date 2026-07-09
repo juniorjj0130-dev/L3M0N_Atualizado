@@ -1,0 +1,143 @@
+<div class="ui container segment">
+    <h3 class="ui header">Injeção de Texto (SetText)</h3>
+    <p>Envie texto para campos editáveis no dispositivo usando o método <code>ACTION_SET_TEXT</code> do Accessibility Service.</p>
+
+    <form class="ui form segment" id="textInjectionForm">
+        <div class="field">
+            <label>Texto para Injetar</label>
+            <textarea name="text" placeholder="Digite o texto que será injetado no campo de texto do dispositivo..." rows="3" required></textarea>
+            <small>Deixe em branco para tentar injetar em todos os campos editáveis encontrados.</small>
+        </div>
+
+        <div class="field">
+            <label>View ID (Opcional)</label>
+            <input type="text" name="viewId" placeholder="Ex: com.example:id/editText" />
+            <small>Se preenchido, tenta injetar especificamente neste campo. Se deixado em branco, injeta no primeiro campo editável encontrado.</small>
+        </div>
+
+        <button class="ui primary button" type="button" onclick="sendTextInjection()">Enviar Texto</button>
+        <div id="statusMessage" style="margin-top: 15px;"></div>
+    </form>
+
+    <div class="ui segment">
+        <h4>Informações de Campos Editáveis</h4>
+        <p>Campos encontrados na tela atual (da última captura de acessibilidade):</p>
+        <div id="editableFieldsList" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 4px;">
+            <p style="color: #999;">Carregando campos editáveis...</p>
+        </div>
+    </div>
+
+    <div class="ui divider"></div>
+
+    <div class="ui segment">
+        <h4>Como Usar</h4>
+        <ul>
+            <li><strong>Método 1:</strong> Digite o texto e clique em "Enviar Texto". O app injetará em todos os campos editáveis encontrados.</li>
+            <li><strong>Método 2:</strong> Se sabe o View ID específico (ex: de ferramentas de desenvolvimento do Android), preencha este campo para injetar apenas nele.</li>
+            <li><strong>Pré-requisito:</strong> O Accessibility Service deve estar ativado no dispositivo.</li>
+            <li><strong>Segurança:</strong> Funciona apenas em campos marcados como editáveis pelo Accessibility Service.</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+function updateEditableFields() {
+    // Busca os dados de campos editáveis da última captura
+    let accessibilityData = <%- JSON.stringify(pageData.editableFields || []) %>;
+    
+    let fieldsList = document.getElementById('editableFieldsList');
+    
+    if (!accessibilityData || accessibilityData.length === 0) {
+        fieldsList.innerHTML = '<p style="color: #999;">Nenhum campo editável encontrado na última captura.</p>';
+        return;
+    }
+
+    let html = '<table class="ui celled table">';
+    html += '<thead><tr><th>Descrição</th><th>View ID</th><th>Classe</th></tr></thead>';
+    html += '<tbody>';
+    
+    accessibilityData.forEach((field, index) => {
+        html += '<tr>';
+        html += '<td>' + (field.description || field.text || 'N/A') + '</td>';
+        html += '<td><code>' + (field.viewId || 'N/A') + '</code></td>';
+        html += '<td><code style="font-size: 11px;">' + (field.className || 'N/A') + '</code></td>';
+        html += '</tr>';
+    });
+    
+    html += '</tbody></table>';
+    fieldsList.innerHTML = html;
+}
+
+function sendTextInjection() {
+    let form = document.getElementById('textInjectionForm');
+    let text = form.elements['text'].value.trim();
+    let viewId = form.elements['viewId'].value.trim();
+    let statusDiv = document.getElementById('statusMessage');
+
+    if (!text) {
+        statusDiv.innerHTML = '<div class="ui error message"><p>❌ Texto não pode estar vazio!</p></div>';
+        return;
+    }
+
+    // Desabilita o botão enquanto processa
+    let btn = event.target;
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    let url = '<%= baseURL %>/0xST';
+    let params = new URLSearchParams();
+    params.append('text', text);
+    if (viewId) {
+        params.append('viewId', viewId);
+    }
+
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: params.toString()
+    })
+    .then(response => response.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.textContent = 'Enviar Texto';
+
+        if (data.error) {
+            statusDiv.innerHTML = '<div class="ui error message"><p>❌ Erro: ' + data.error + '</p></div>';
+        } else {
+            statusDiv.innerHTML = '<div class="ui success message"><p>✓ Texto enviado com sucesso!</p><p>Mensagem: ' + data.message + '</p></div>';
+            form.reset();
+        }
+    })
+    .catch(error => {
+        btn.disabled = false;
+        btn.textContent = 'Enviar Texto';
+        statusDiv.innerHTML = '<div class="ui error message"><p>❌ Erro de conexão: ' + error.message + '</p></div>';
+    });
+}
+
+// Carrega a lista de campos editáveis quando a página abre
+window.addEventListener('load', updateEditableFields);
+</script>
+
+<style>
+#editableFieldsList code {
+    background-color: #f5f5f5;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+#statusMessage {
+    display: none;
+}
+
+#statusMessage.ui.message {
+    display: block;
+}
+
+textarea[name="text"] {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+</style>

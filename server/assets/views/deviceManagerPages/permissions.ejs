@@ -1,0 +1,31 @@
+<div class="ui segment">
+    <div class="ui secondary menu">
+        <div class="right menu">
+            <button onclick="updateButton(this, '0xPM')" class="ui blue button"> <i
+                    class="icon sync"></i>Update</button>
+        </div>
+    </div>
+    <table class="ui celled table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% pageData.forEach((permission) => { %>
+            <% let permissionName = permission.name || permission; %>
+            <% let permissionStatus = permission.status || (permission.granted ? 'granted' : 'unknown'); %>
+            <% let isGranted = permission.granted === true || permissionStatus === 'granted'; %>
+            <tr>
+                <td><%= permissionName %></td>
+                <td><div class="ui <%= isGranted ? 'green' : 'orange' %> label"><%= permissionStatus %></div></td>
+                <td>
+                    <button onclick="updateButton(this, '0xPA', { permission: '<%= permissionName %>' })" class="ui tiny basic button">Open settings</button>
+                </td>
+            </tr>
+            <% }) %>
+        </tbody>
+    </table>
+</div>
