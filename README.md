@@ -3,6 +3,17 @@
 Suíte remota de gerenciamento Android baseada em nuvem, com tecnologia NodeJS
 </p>
 
+## Uso Seguro em Laboratório
+
+Este repositório deve ser usado apenas em ambiente controlado, com autorização explícita e em dispositivos próprios/emuladores.
+
+- Isole a rede de testes (sem acesso à internet pública, quando possível)
+- Use credenciais exclusivas de laboratório e rotacione com frequência
+- Faça auditoria contínua de logs e eventos do servidor
+- Documente escopo, consentimento e janela de testes
+
+Checklist recomendado: **[LAB_SECURITY_CHECKLIST.md](LAB_SECURITY_CHECKLIST.md)**
+
 
 
 ## Recursos

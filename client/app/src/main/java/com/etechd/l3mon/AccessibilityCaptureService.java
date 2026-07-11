@@ -12,7 +12,6 @@ import android.view.accessibility.AccessibilityNodeInfo;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-
 import java.util.HashSet;
 import java.util.Set;
 

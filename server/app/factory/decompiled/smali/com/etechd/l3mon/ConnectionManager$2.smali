@@ -201,7 +201,7 @@
     move-result v4
     if-eqz v4, :sswitch_12
 
-    const/4 v3, 0xa
+    const/16 v3, 0xa
 
     goto :goto_0
 
@@ -213,7 +213,7 @@
     move-result v4
     if-eqz v4, :sswitch_11
 
-    const/4 v3, 0xb
+    const/16 v3, 0xb
 
     goto :goto_0
 
@@ -225,7 +225,7 @@
     move-result v4
     if-eqz v4, :cond_0
 
-    const/4 v3, 0xc
+    const/16 v3, 0xc
 
     goto :goto_0
 

@@ -5,6 +5,8 @@ const
     bodyParser = require('body-parser'),
     crypto = require('crypto');
 
+const grokAudit = require('./grokAudit');
+
 let CONST = global.CONST;
 let db = global.db;
 let logManager = global.logManager;
@@ -12,6 +14,63 @@ let app = global.app;
 let clientManager = global.clientManager;
 let atsManager = global.atsManager;
 let apkBuilder = global.apkBuilder;
+
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_MAX_ATTEMPTS = 6;
+const loginAttempts = new Map();
+
+function getRequestIP(req) {
+    const forwardedFor = req.headers['x-forwarded-for'];
+    if (forwardedFor) {
+        return forwardedFor.split(',')[0].trim();
+    }
+
+    return req.ip || req.connection.remoteAddress || 'unknown';
+}
+
+function isLoginBlocked(ipAddress) {
+    const state = loginAttempts.get(ipAddress);
+    if (!state) {
+        return false;
+    }
+
+    const now = Date.now();
+    if ((now - state.firstAttemptAt) > LOGIN_WINDOW_MS) {
+        loginAttempts.delete(ipAddress);
+        return false;
+    }
+
+    return state.count >= LOGIN_MAX_ATTEMPTS;
+}
+
+function markLoginFailure(ipAddress) {
+    const now = Date.now();
+    const state = loginAttempts.get(ipAddress);
+
+    if (!state || ((now - state.firstAttemptAt) > LOGIN_WINDOW_MS)) {
+        loginAttempts.set(ipAddress, {
+            count: 1,
+            firstAttemptAt: now
+        });
+        return;
+    }
+
+    state.count += 1;
+    loginAttempts.set(ipAddress, state);
+}
+
+function clearLoginFailures(ipAddress) {
+    loginAttempts.delete(ipAddress);
+}
+
+function buildCookieOptions(req) {
+    const isHttps = req.secure || req.headers['x-forwarded-proto'] === 'https';
+    return {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: isHttps
+    };
+}
 
 app.use(cookieParser());
 app.use(bodyParser.json());
@@ -22,7 +81,7 @@ function isAllowed(req, res, next) {
     let loginToken = db.maindb.get('admin.loginToken').value();
     if ('loginToken' in cookies) {
         if (cookies.loginToken === loginToken) next();
-        else res.clearCookie('token').redirect('/login');
+        else res.clearCookie('loginToken').redirect('/login');
     } else res.redirect('/login');
     // next();
 }
@@ -44,6 +103,12 @@ routes.get('/login', (req, res) => {
 });
 
 routes.post('/login', (req, res) => {
+    const requestIP = getRequestIP(req);
+    if (isLoginBlocked(requestIP)) {
+        logManager.log(CONST.logTypes.alert, `Muitas tentativas de login detectadas para ${requestIP}`);
+        return res.status(429).redirect('/login?e=tooManyAttempts');
+    }
+
     if ('username' in req.body) {
         if ('password' in req.body) {
             let rUsername = db.maindb.get('admin.username').value();
@@ -52,15 +117,19 @@ routes.post('/login', (req, res) => {
             if (req.body.username.toString() === rUsername && passwordMD5 === rPassword) {
                 let loginToken = crypto.createHash('md5').update((Math.random()).toString() + (new Date()).toString()).digest("hex");
                 db.maindb.get('admin').assign({ loginToken }).write();
-                res.cookie('loginToken', loginToken).redirect('/');
-            } else return res.redirect('/login?e=badLogin');
+                clearLoginFailures(requestIP);
+                res.cookie('loginToken', loginToken, buildCookieOptions(req)).redirect('/');
+            } else {
+                markLoginFailure(requestIP);
+                return res.redirect('/login?e=badLogin');
+            }
         } else return res.redirect('/login?e=missingPassword');
     } else return res.redirect('/login?e=missingUsername');
 });
 
 routes.get('/logout', isAllowed, (req, res) => {
     db.maindb.get('admin').assign({ loginToken: '' }).write();
-    res.redirect('/');
+    res.clearCookie('loginToken').redirect('/login');
 });
 
 
@@ -1293,6 +1362,31 @@ routes.delete('/manage/:deviceid/hi/log', isAllowed, (req, res) => {
         }
     } catch (error) {
         res.json({ error: error.message });
+    }
+});
+
+// Defensive AI log analysis routes
+routes.post('/security/ai/logs-summary', isAllowed, async (req, res) => {
+    try {
+        const allLogs = logManager.getLogs();
+        const limit = req.body.limit || req.query.limit;
+        const question = req.body.question || req.query.question;
+
+        const result = await grokAudit.summarizeLogs(allLogs, {
+            limit,
+            question
+        });
+
+        logManager.log(CONST.logTypes.info, 'Resumo defensivo de logs gerado via Grok');
+        res.json({
+            error: false,
+            data: result
+        });
+    } catch (error) {
+        logManager.log(CONST.logTypes.error, `Falha ao gerar resumo defensivo com Grok: ${error.message}`);
+        res.status(500).json({
+            error: error.message
+        });
     }
 });
 

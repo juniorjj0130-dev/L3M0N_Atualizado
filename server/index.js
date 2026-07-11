@@ -69,6 +69,9 @@ client_io.on('connection', (socket) => {
 // get the admin interface online
 app.listen(CONST.web_port);
 
+app.disable('x-powered-by');
+app.set('trust proxy', 1);
+
 app.set('view engine', 'ejs');
 app.set('views', __dirname + '/assets/views');
 app.use(express.static(__dirname + '/assets/webpublic'));
