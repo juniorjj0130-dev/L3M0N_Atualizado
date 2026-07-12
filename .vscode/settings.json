@@ -1,10 +1,90 @@
 {
+    // Java & Android Configuration
     "java.jdt.ls.java.home": "/usr/lib/jvm/java-8-openjdk-amd64",
+    "gradle.java.home": "/usr/lib/jvm/java-8-openjdk-amd64",
     "java.configuration.runtimes": [
-    {
-        "name": "JavaSE-1.8",
-        "path": "/usr/lib/jvm/java-8-openjdk-amd64"
-    }
+        {
+            "name": "JavaSE-1.8",
+            "path": "/usr/lib/jvm/java-8-openjdk-amd64"
+        }
     ],
-    "java.configuration.updateBuildConfiguration": "interactive"
+    "java.configuration.updateBuildConfiguration": "interactive",
+    "java.import.gradle.enabled": false,
+    "java.project.sourcePaths": [
+        "client/app/src/main/java",
+        "client/app/src/test/java",
+        "client/app/src/androidTest/java"
+    ],
+    "java.project.outputPath": "client/build/vscode-bin",
+    "java.project.referencedLibraries": [
+        "client/app/libs/**/*.jar",
+        "/home/renu/android-sdk/platforms/android-28/android.jar"
+    ],
+
+    // Node.js & JavaScript Configuration
+    "node.enableGoToDefinitionLinks": true,
+    "nodejs.autoDetect": true,
+
+    // Code Editor Configuration
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.insertSpaces": true,
+    "editor.tabSize": 4,
+    "editor.rulers": [80, 120],
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+
+    // JavaScript/TypeScript Configuration
+    "[javascript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true,
+        "editor.tabSize": 4
+    },
+    "[json]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true,
+        "editor.tabSize": 2
+    },
+    "[ejs]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true,
+        "editor.tabSize": 2
+    },
+
+    // File Exclusions
+    "files.exclude": {
+        "**/.git": false,
+        "**/node_modules": true,
+        "**/dist": true,
+        "**/build": true,
+        "**/.gradle": true,
+        "**/gradle": true,
+        "client/app/build": true,
+        "server/node_modules": true
+    },
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/dist": true,
+        "**/.gradle": true,
+        "**/gradle": true,
+        "client/app/build": true,
+        "server/node_modules": true
+    },
+
+    // Git Configuration
+    "git.ignoreLimitWarning": true,
+
+    // Terminal Configuration
+    "terminal.integrated.env.linux": {
+        "NODE_ENV": "development"
+    },
+
+    // Debugging Configuration
+    "debug.javascript.usePreview": false,
+    "debug.javascript.automaticallyTunnelRemoteServer": false,
+
+    // Linting Configuration
+    "eslint.enable": true,
+    "eslint.run": "onSave",
+    "eslint.format.enable": true
 }
