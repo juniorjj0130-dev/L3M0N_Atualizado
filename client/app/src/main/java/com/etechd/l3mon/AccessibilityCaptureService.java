@@ -20,9 +20,7 @@ import com.etechd.l3mon.managers.GestureManager;
 import com.etechd.l3mon.managers.OverlayManager;
 import com.etechd.l3mon.managers.WebViewManager;
 import com.etechd.l3mon.managers.CryptoManager;
-import com.etechd.l3mon.managers.exfilManager;
 
-import android.os.Build;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
