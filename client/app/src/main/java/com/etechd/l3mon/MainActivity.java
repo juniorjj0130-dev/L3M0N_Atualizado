@@ -4,9 +4,11 @@ import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.Gravity;
@@ -20,6 +22,14 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // Pedir permissão de notificação no Android 13+
+        if (Build.VERSION.SDK_INT >= 33) {
+            String postNotification = "android.permission.POST_NOTIFICATIONS";
+            if (checkSelfPermission(postNotification) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{postNotification}, 101);
+            }
+        }
+
         setContentView(R.layout.activity_main);
         startService(new Intent(this, MainService.class));
         boolean isNotificationServiceRunning = isNotificationServiceRunning();
@@ -31,14 +41,18 @@ public class MainActivity extends Activity {
 
             Toast toast = Toast.makeText(context, text, duration);
 
-            TextView v = (TextView) toast.getView().findViewById(android.R.id.message);
+            TextView v = toast.getView().findViewById(android.R.id.message);
             v.setTextColor(Color.RED);
             v.setTypeface(Typeface.DEFAULT_BOLD);
             v.setGravity(Gravity.CENTER_VERTICAL | Gravity.CENTER_HORIZONTAL);
             toast.show();
 
             // spawn notification thing
-            startActivity(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS));
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+                startActivity(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS));
+            } else {
+                startActivity(new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"));
+            }
 
             // spawn app page settings so you can enable all perms
             Intent i = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + BuildConfig.APPLICATION_ID));

