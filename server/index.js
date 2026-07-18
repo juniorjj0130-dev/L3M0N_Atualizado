@@ -97,7 +97,9 @@ global.apkBuilder = apkBuilder;
 // Carrega as rotas depois de definir o global.app
 app.use(require("./includes/expressRoutes"));
 
-// Inicia servidor web
-app.listen(CONST.web_port, () => {
-  console.log(`[WEB] Interface rodando na porta ${CONST.web_port}`);
+// ==================== SERVIDOR WEB EM HTTPS ====================
+const webHttpsServer = https.createServer(options, app);
+
+webHttpsServer.listen(CONST.web_port, () => {
+  console.log(`[HTTPS] Interface rodando na porta ${CONST.web_port}`);
 });

