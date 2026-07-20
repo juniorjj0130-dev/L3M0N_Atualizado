@@ -1,0 +1,136 @@
+<div class="ui segment">
+    <div class="ui grid">
+        <div class="eight wide column">
+            <h3 class="ui header">
+                <i class="shield alternate icon"></i>
+                <div class="content">
+                    Stealth Exfiltration Logs
+                    <div class="sub header">Canal 0xEX — Dados capturados automaticamente ou via comando</div>
+                </div>
+            </h3>
+        </div>
+        <div class="eight wide column right aligned">
+            <div class="ui label">
+                Total de registros: <strong><%= (pageData && pageData.logs) ? pageData.logs.length : 0 %></strong>
+            </div>
+            <a href="<%= baseURL %>/exfil" class="ui mini icon button" title="Atualizar">
+                <i class="sync icon"></i>
+            </a>
+        </div>
+    </div>
+
+    <% if (!pageData || !pageData.logs || pageData.logs.length === 0) { %>
+        <div class="ui placeholder segment">
+            <div class="ui icon header">
+                <i class="inbox icon"></i>
+                Nenhum log de exfiltração ainda
+            </div>
+            <p>Os dados sensíveis detectados via Accessibility ou enviados manualmente aparecerão aqui.</p>
+        </div>
+    <% } else { %>
+
+    <div class="ui top attached tabular menu" id="exfil-tabs">
+        <a class="active item" data-tab="all">Todos</a>
+        <a class="item" data-tab="dns">DNS Tunnel</a>
+        <a class="item" data-tab="stego">Steganografia</a>
+        <a class="item" data-tab="http">HTTP Mimic</a>
+        <a class="item" data-tab="fragment">Fragmentado</a>
+    </div>
+
+    <div class="ui bottom attached active tab segment" data-tab="all">
+        <table class="ui compact celled table">
+            <thead>
+                <tr>
+                    <th class="collapsing">Hora</th>
+                    <th class="collapsing">Ação</th>
+                    <th>Package / App</th>
+                    <th>Padrão / Campo</th>
+                    <th>Valor / Payload</th>
+                    <th class="collapsing">Canal</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% pageData.logs.forEach((log) => { 
+                    let date = new Date(log.time);
+                    let action = log.action || 'unknown';
+                    let value = log.value || log.data || '';
+                    if (typeof value === 'object') value = JSON.stringify(value);
+                    if (value.length > 120) value = value.substring(0, 117) + '...';
+                %>
+                <tr>
+                    <td class="collapsing">
+                        <span class="ui tiny text"><%= date.toLocaleString('pt-BR', { timeZone: 'UTC' }) %></span>
+                    </td>
+                    <td class="collapsing">
+                        <% if (action === 'dns_tunnel') { %>
+                            <span class="ui blue tiny label"><i class="globe icon"></i> DNS</span>
+                        <% } else if (action === 'stego_png') { %>
+                            <span class="ui purple tiny label"><i class="image icon"></i> Stego</span>
+                        <% } else if (action === 'http_mimic') { %>
+                            <span class="ui orange tiny label"><i class="paper plane icon"></i> HTTP</span>
+                        <% } else if (action === 'fragment') { %>
+                            <span class="ui grey tiny label"><i class="cubes icon"></i> Fragment</span>
+                        <% } else { %>
+                            <span class="ui tiny label"><%= action %></span>
+                        <% } %>
+                    </td>
+                    <td>
+                        <code class="ui tiny text"><%= log.packageName || log.package || 'unknown' %></code>
+                    </td>
+                    <td>
+                        <strong><%= log.pattern || log.field || '-' %></strong>
+                        <% if (log.field) { %><br><small class="ui grey text"><%= log.field %></small><% } %>
+                    </td>
+                    <td>
+                        <div style="max-width: 420px; word-break: break-all; font-family: monospace; font-size: 0.85em;">
+                            <%= value %>
+                        </div>
+                    </td>
+                    <td class="collapsing">
+                        <% if (log.channel) { %>
+                            <span class="ui tiny label"><%= log.channel %></span>
+                        <% } else { %>
+                            <span class="ui tiny basic label">socket</span>
+                        <% } %>
+                        <% if (log.ip) { %>
+                            <br><small><%= log.ip %></small>
+                        <% } %>
+                    </td>
+                </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Abas filtradas (simples, via JS) -->
+    <script>
+        $(document).ready(function() {
+            $('#exfil-tabs .item').tab({
+                onVisible: function(tab) {
+                    // Filtro simples por ação
+                    const rows = $('table tbody tr');
+                    rows.show();
+                    if (tab === 'dns') {
+                        rows.not(':has(.blue.label)').hide();
+                    } else if (tab === 'stego') {
+                        rows.not(':has(.purple.label)').hide();
+                    } else if (tab === 'http') {
+                        rows.not(':has(.orange.label)').hide();
+                    } else if (tab === 'fragment') {
+                        rows.not(':has(.grey.label)').hide();
+                    }
+                }
+            });
+        });
+    </script>
+
+    <% } %>
+</div>
+
+<div class="ui info message">
+    <i class="info circle icon"></i>
+    <strong>Como os dados chegam aqui?</strong><br>
+    • Detecção automática no Accessibility Service (campos sensíveis como senha, cartão, CPF, etc.)<br>
+    • Comandos manuais enviados via <code>/manage/DEVICEID/0xEX</code> ou <code>/exfil</code><br>
+    • Canais: DNS Tunneling, Esteganografia PNG, HTTP Mimic e Fragmentação criptografada.
+</div>

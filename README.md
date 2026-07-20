@@ -1,24 +1,123 @@
 <p align="center">
 <img src="https://github.com/D3VL/L3MON/raw/master/server/assets/webpublic/logo.png" height="60"><br>
+<b>L3M0N Atualizado</b><br>
 Suíte remota de gerenciamento Android baseada em nuvem, com tecnologia NodeJS
 </p>
 
-## Uso Seguro em Laboratório
+<p align="center">
+<a href="https://img.shields.io/badge/license-MIT-blue.svg"><img src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
+<a href="#"><img src="https://img.shields.io/badge/tests-170%2B%20passing-brightgreen"></a>
+<a href="#"><img src="https://img.shields.io/badge/status-Beta%20Avançado-yellow"></a>
+<a href="https://github.com/juniorjj0130-dev/L3M0N_Atualizado/commits/main"><img src="https://img.shields.io/github/last-commit/juniorjj0130-dev/L3M0N_Atualizado"></a>
+</p>
 
-Este repositório deve ser usado apenas em ambiente controlado, com autorização explícita e em dispositivos próprios/emuladores.
+---
 
-- Isole a rede de testes (sem acesso à internet pública, quando possível)
-- Use credenciais exclusivas de laboratório e rotacione com frequência
-- Faça auditoria contínua de logs e eventos do servidor
-- Documente escopo, consentimento e janela de testes
+## ⚠️ AVISO CRÍTICO – USO EXCLUSIVO EM LABORATÓRIO CONTROLADO
 
-Checklist recomendado: **[LAB_SECURITY_CHECKLIST.md](LAB_SECURITY_CHECKLIST.md)**
+**Este software deve ser utilizado APENAS em ambiente controlado e com autorização explícita.**
 
+- Use **somente em dispositivos próprios ou emuladores** que você controla totalmente.
+- Isole a rede de testes (sem acesso à internet pública sempre que possível).
+- Utilize credenciais exclusivas de laboratório e rotacione com frequência.
+- Realize auditoria contínua de logs e eventos.
+- **Documente sempre** o escopo, o consentimento explícito e a janela de testes.
 
+**Checklist completo de segurança e boas práticas:**
+**[LAB_SECURITY_CHECKLIST.md](LAB_SECURITY_CHECKLIST.md)**
+
+Qualquer uso fora desses parâmetros é de **inteira responsabilidade do usuário**.
+
+---
+
+## Uso em Engajamentos de Red Team e Pentest Autorizado
+
+**Esta ferramenta é destinada exclusivamente a profissionais de segurança da informação que realizam testes autorizados.**
+
+### Requisitos Mínimos para Uso
+
+Antes de utilizar o L3M0N Atualizado em qualquer ambiente, **é obrigatório** atender a todos os itens abaixo:
+
+- **Rules of Engagement (RoE)** formalmente documentadas e assinadas pelo cliente ou responsável pelo alvo.
+- **Escopo claramente definido** (dispositivos, aplicativos, tempo de teste, limites de ação).
+- **Autorização por escrito** do proprietário ou responsável legal pelos dispositivos/testes.
+- **Ambiente controlado e isolado** (preferencialmente em rede isolada, sem acesso à internet pública).
+- **Dispositivos próprios ou emuladores** sob controle total do time de red team.
+- **Consentimento explícito** e documentado de todos os envolvidos.
+
+### Boas Práticas Recomendadas
+
+- Utilize credenciais exclusivas e temporárias para cada engajamento.
+- Mantenha logs completos de todas as ações realizadas (comandos enviados, dados coletados, horários).
+- Realize auditoria contínua durante o teste.
+- Após o término do engajamento:
+  - Remova completamente todos os artefatos instalados nos dispositivos.
+  - Revogue acessos e credenciais utilizadas.
+  - Documente evidências de limpeza.
+- Nunca deixe a ferramenta ou qualquer componente persistindo em ambientes de produção ou em dispositivos de usuários finais sem autorização explícita e contínua.
+
+### O que é Estritamente Proibido
+
+- Utilizar esta ferramenta sem Rules of Engagement formal e autorização escrita.
+- Testar dispositivos ou contas que não pertencem ao escopo autorizado.
+- Utilizar a ferramenta contra alvos reais sem consentimento explícito do proprietário.
+- Manter persistência ou acesso após o término do engajamento autorizado.
+- Compartilhar ou distribuir builds/apks gerados fora do contexto do engajamento autorizado.
+
+### Responsabilidade
+
+O uso desta ferramenta **sem autorização formal** pode configurar crimes previstos na legislação brasileira (Lei 12.737/2012, LGPD, entre outras) e em legislações internacionais.
+
+**O mantenedor e os colaboradores deste projeto não se responsabilizam por qualquer uso indevido, ilegal ou não autorizado.**
+
+### Recomendação
+
+Recomenda-se fortemente que equipes de red team criem um **checklist interno de autorização** baseado neste documento e no arquivo [LAB_SECURITY_CHECKLIST.md](LAB_SECURITY_CHECKLIST.md) antes de iniciar qualquer engajamento.
+
+Se você está realizando um teste autorizado, documente:
+
+- Data e hora de início e término
+- Escopo aprovado
+- RoE assinada
+- Evidências de limpeza ao final
+
+---
+
+**Como usar esta seção:**
+
+1. Cole logo após a seção do **Aviso Crítico** (ou no final do README, antes dos Agradecimentos).
+2. Mantenha o link para o `LAB_SECURITY_CHECKLIST.md`.
+3. Se quiser, pode renomear o título para “Uso Responsável em Red Team” ou “Requisitos para Engajamentos Autorizados”.
+
+---
+
+Quer que eu faça alguma alteração nesta seção? (ex: deixar mais curta, mais rigorosa, adicionar algo específico, ou integrar diretamente na versão completa do README?)
+
+Posso também entregar agora a **versão completa do README** já com esta seção incluída + as melhorias que discutimos antes.
+
+## Sumário
+
+- [⚠️ AVISO CRÍTICO – USO EXCLUSIVO EM LABORATÓRIO CONTROLADO](#️-aviso-crítico--uso-exclusivo-em-laboratório-controlado)
+- [Uso em Engajamentos de Red Team e Pentest Autorizado](#uso-em-engajamentos-de-red-team-e-pentest-autorizado)
+  - [Requisitos Mínimos para Uso](#requisitos-mínimos-para-uso)
+  - [Boas Práticas Recomendadas](#boas-práticas-recomendadas)
+  - [O que é Estritamente Proibido](#o-que-é-estritamente-proibido)
+  - [Responsabilidade](#responsabilidade)
+  - [Recomendação](#recomendação)
+- [Sumário](#sumário)
+- [Recursos](#recursos)
+  - [Funcionalidades Principais](#funcionalidades-principais)
+- [Módulos Avançados](#módulos-avançados)
+- [Arquitetura de Módulos](#arquitetura-de-módulos)
+- [Pré-requisitos](#pré-requisitos)
+- [Instalação](#instalação)
+
+---
 
 ## Recursos
 
 ### Funcionalidades Principais
+
 - Registro de GPS e Rastreamento de Localização
 - Gravação de Microfone e Captura de Áudio
 - Gerenciamento e Visualização de Contatos
@@ -29,132 +128,76 @@ Checklist recomendado: **[LAB_SECURITY_CHECKLIST.md](LAB_SECURITY_CHECKLIST.md)*
 - Gerenciamento e Visualização de Permissões
 - Registro de Área de Transferência em Tempo Real
 - Registro de Notificações em Tempo Real
-- Monitoramento de Redes WiFi (redes vistas anteriormente)
+- Monitoramento de Redes WiFi
 - Explorador de Arquivos e Downloader
 - Fila de Comandos e Execução
 - Construtor e Injetor de APK Integrado
 
-### Módulos Avançados (12 Total)
-1. **0xST** - SetText: Injeção manual de texto em aplicativos
-2. **0xAT** - ATS System: Injeção automática de dados com correspondência de padrões
-3. **0xAC** - AutoClick: Clique automático de botões e confirmação
-4. **0xDF** - Defense Disable: Contorno de segurança e desarmamento
-5. **0xPG** - Permission Grant: Aprovação automática de permissões
-6. **0xGS** - Gesture Simulation: Gestos de toque, deslizar e toque longo
-7. **0xTA** - Transaction Approval: Automação de transferências bancárias e pagamentos
-8. **0xDSU** - Dynamic Screen Unlock: Replay e desbloqueio de PIN/padrão
-9. **0xOI** - Overlay Injection: Detecção e injeção de sobreposição falsa
-10. **0xFC** - Customized Forms Capture: Captura de campo de formulário em tempo real
-11. **0xBP** - Bypass Protections: Contorno de segurança Android 13+
-12. **0xHI** - Advanced Hide Icon: Ocultação de ícone de aplicativo com serviço em background
+---
+
+## Módulos Avançados
+
+Os **12 módulos avançados** foram desenvolvidos seguindo uma arquitetura consistente e são destinados a **automação e testes em ambiente controlado de laboratório**.
+
+Todos os módulos seguem o mesmo padrão:
+
+- Protocolo de comunicação via Socket.IO
+- Endpoints REST no servidor
+- Integração com Accessibility Service no Android
+- Dashboards em tempo real
+- Suítes de teste específicas
+
+**Lista dos módulos:**
+
+1. **0xST** - SetText
+2. **0xAT** - ATS System
+3. **0xAC** - AutoClick
+4. **0xDF** - Defense Disable
+5. **0xPG** - Permission Grant
+6. **0xGS** - Gesture Simulation
+7. **0xTA** - Transaction Approval
+8. **0xDSU** - Dynamic Screen Unlock
+9. **0xOI** - Overlay Injection
+10. **0xFC** - Customized Forms Capture
+11. **0xBP** - Bypass Protections
+12. **0xHI** - Advanced Hide Icon
+
+Detalhes completos de arquitetura e implementação estão em **[AGENTS.md](AGENTS.md)**.
+
+---
 
 ## Arquitetura de Módulos
 
-Todos os módulos avançados (0xXX) seguem um padrão de arquitetura consistente:
-- **Protocolo de Mensagem**: Eventos Socket.IO com chaves de mensagem 0xXX
-- **Lado do Servidor**: Rotas Express.js, esquemas de banco de dados via lowdb, dashboards de interface Web em tempo real
-- **Lado do Cliente**: Integração do Android Accessibility Service para automação
-- **Comunicação**: Mensagens bidirecionais em tempo real com cargas JSON
-- **Persistência**: Configuração por dispositivo armazenada em banco de dados JSON lowdb
+Todos os módulos avançados seguem um padrão de arquitetura consistente:
 
-Cada módulo inclui:
-- Endpoints da API REST para despacho de comandos
-- Dashboard web com atualizações de status em tempo real
-- Manipuladores de serviço Android com roteamento de ações
-- Suites de teste abrangentes (15-20 testes por módulo)
-- Registro e trilhas de auditoria completos
+- **Protocolo de Mensagem**: Eventos Socket.IO com chaves de mensagem 0xXX
+- **Lado do Servidor**: Rotas Express.js, esquemas de banco de dados via lowdb, dashboards web em tempo real
+- **Lado do Cliente**: Integração do Android Accessibility Service
+- **Comunicação**: Mensagens bidirecionais em tempo real com cargas JSON
+- **Persistência**: Configuração por dispositivo armazenada em lowdb
+
+Cada módulo inclui endpoints REST, dashboard web, manipuladores Android, testes automatizados e trilhas de auditoria.
+
+---
 
 ## Pré-requisitos
- - Java Runtime Environment 8
-    - Consulte [instalação](#instalação) para especificações do sistema operacional
- - NodeJs
- - Um Servidor
+
+- Java Runtime Environment 8 (JRE 8)
+- Node.js
+- Um servidor (recomendado Linux)
+
+---
 
 ## Instalação
-1. Instale JRE 8
-    - Debian, Ubuntu, etc
-        - `sudo apt-get install openjdk-8-jre`
-    - Fedora, Oracle, Red Hat, etc
-        -  `su -c "yum install java-1.8.0-openjdk"`
-    - Windows
-        - clique [AQUI](https://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html) para downloads
 
-2. Instale NodeJS [Instruções Aqui](https://nodejs.org/en/download/package-manager/) (Se não conseguir, provavelmente não deveria usar isto)
+1. Instale o **JRE 8**
+   - Debian/Ubuntu: `sudo apt-get install openjdk-8-jre`
+   - Fedora/Red Hat: `su -c "yum install java-1.8.0-openjdk"`
+   - Windows: baixe em [oracle.com](https://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html)
 
-3. Instale PM2
-    - `npm install pm2 -g`
+2. Instale o **Node.js** (recomendado via gerenciador de pacotes oficial)
 
-4. Baixe e Extraia a versão mais recente de [AQUI](https://github.com/D3VL/L3MON/releases/)
-
-5. Na pasta extraída, execute estes comandos
-    - `npm install` <- instala dependências
-    - `pm2 start index.js` <-- inicia o script
-    - `pm2 startup` <- para executar L3MON na inicialização
-
-6. Defina um Usuário e Senha
-    1. Pare o L3MON `pm2 stop index`
-    2. Abra `maindb.json` em um editor de texto
-    3. em `admin`
-        - defina o `username` como texto simples
-        - defina a `password` como um hash MD5 em MINÚSCULAS
-    4. salve o arquivo
-    5. execute `pm2 restart all`
-
-7. No seu navegador, navegue até `http://<SERVER IP>:22533`
-
-É recomendado executar L3MON atrás de um proxy reverso como [NGINX](https://www.nginx.com/resources/wiki/start/topics/tutorials/install/)
-
-## Testes
-
-Suites de teste abrangentes são fornecidas para todos os módulos:
-```bash
-cd server
-npm install
-npm test
-```
-
-A cobertura de testes inclui:
-- Validação de registro de chave de mensagem
-- Verificações de integridade do esquema de banco de dados
-- Funcionalidade do endpoint REST
-- Comportamento do manipulador Android
-- Testes de integração em todos os módulos
-- Tratamento de erros e casos extremos
-
-**Status de Testes**: 170+ testes, todos passando ✅
-
-## Screenshots
-| | | |
-|:-------------------------:|:-------------------------:|:-------------------------:|
-|<a href="https://github.com/D3VL/L3MON/raw/master/Screenshots/call_log.png"> <img width="1604" src="https://github.com/D3VL/L3MON/raw/master/Screenshots/call_log.png"> Call Log</a> | <a href="https://github.com/D3VL/L3MON/raw/master/Screenshots/apk_builder.png"> <img width="1604" src="https://github.com/D3VL/L3MON/raw/master/Screenshots/apk_builder.png"> APK Builder</a> |<a href="https://github.com/D3VL/L3MON/raw/master/Screenshots/clipboard.png"> <img width="1604" src="https://github.com/D3VL/L3MON/raw/master/Screenshots/clipboard.png"> Clipboard Log</a>||
-<a href="https://github.com/D3VL/L3MON/raw/master/Screenshots/contacts.png"> <img width="1604" src="https://github.com/D3VL/L3MON/raw/master/Screenshots/contacts.png"> Contacts</a>  |  <a href="https://github.com/D3VL/L3MON/raw/master/Screenshots/devices.png"> <img width="1604" src="https://github.com/D3VL/L3MON/raw/master/Screenshots/devices.png"> Devices</a>|<a href="https://github.com/D3VL/L3MON/raw/master/Screenshots/file_explorer.png"> <img width="1604" src="https://github.com/D3VL/L3MON/raw/master/Screenshots/file_explorer.png"> File Explorer</a>||
-<a href="https://github.com/D3VL/L3MON/raw/master/Screenshots/gps_log.png"> <img width="1604" src="https://github.com/D3VL/L3MON/raw/master/Screenshots/gps_log.png"> GPS Log</a>  | <a href="https://github.com/D3VL/L3MON/raw/master/Screenshots/sms_log.png"> <img width="1604" src="https://github.com/D3VL/L3MON/raw/master/Screenshots/sms_log.png"> SMS Log</a> |<a href="https://github.com/D3VL/L3MON/raw/master/Screenshots/sms_send.png"> <img width="1604" src="https://github.com/D3VL/L3MON/raw/master/Screenshots/sms_send.png"> Send SMS</a>||
-<a href="https://github.com/D3VL/L3MON/raw/master/Screenshots/installed_apps.png"> <img width="1604" src="https://github.com/D3VL/L3MON/raw/master/Screenshots/installed_apps.png"> Installed Apps</a> | <a href="https://github.com/D3VL/L3MON/raw/master/Screenshots/microphone.png"> <img width="1604" src="https://github.com/D3VL/L3MON/raw/master/Screenshots/microphone.png"> Microphone</a> |<a href="https://github.com/D3VL/L3MON/raw/master/Screenshots/notification_log.png"> <img width="1604" src="https://github.com/D3VL/L3MON/raw/master/Screenshots/notification_log.png"> Notifications</a>||
-<a href="https://github.com/D3VL/L3MON/raw/master/Screenshots/event_log.png"> <img width="1604" src="https://github.com/D3VL/L3MON/raw/master/Screenshots/event_log.png"> Event Log</a> | <a href="https://github.com/D3VL/L3MON/raw/master/Screenshots/login.png"> <img width="1604" src="https://github.com/D3VL/L3MON/raw/master/Screenshots/login.png"> Login</a> |<a href="https://github.com/D3VL/L3MON/raw/master/Screenshots/wifi_manager.png"> <img width="1604" src="https://github.com/D3VL/L3MON/raw/master/Screenshots/wifi_manager.png"> WiFi Manager</a>|
-
-## Documentação
-
-Para informações detalhadas sobre arquitetura, módulos e implementação do L3MON:
-- **[AGENTS.md](AGENTS.md)** - Arquitetura completa de módulos, convenções e guia do desenvolvedor
-- **[.github/skills/l3mon-maintainer/SKILL.md](.github/skills/l3mon-maintainer/SKILL.md)** - Fluxos de trabalho e padrões de manutenção
-- **[.github/skills/l3mon-settext/SKILL.md](.github/skills/l3mon-settext/SKILL.md)** - Guia do módulo SetText (0xST)
-- **[.github/skills/l3mon-ats-system/SKILL.md](.github/skills/l3mon-ats-system/SKILL.md)** - Guia do módulo ATS System (0xAT)
-- **[.github/skills/l3mon-autoclick/SKILL.md](.github/skills/l3mon-autoclick/SKILL.md)** - Guia do módulo AutoClick (0xAC)
-
-## Agradecimentos
-L3MON é construído e utiliza vários softwares de código aberto. Sem eles, L3MON não seria o que é!
- - A inspiração para o projeto e os blocos de construção básicos para o aplicativo Android são baseados em [AhMyth](https://github.com/AhMyth/AhMyth-Android-RAT)
- - [express](https://github.com/expressjs/express)
- - [node-geoip](https://github.com/bluesmoon/node-geoip)
- - [lowdb](https://github.com/typicode/lowdb)
- - [socket.io](https://github.com/socketio/socket.io)
- - [Open Street Map](https://www.openstreetmap.org)
- - [Leaflet](https://leafletjs.com/)
-
-## Aviso de Isenção
-<b>D3VL não fornece nenhuma garantia com este software e não será responsável por qualquer dano direto ou indireto causado pelo uso desta ferramenta.<br>
-L3MON é construído apenas para uso Educacional e Interno.</b>
-
-<br>
-<p align="center">Feito com ❤️ Por <a href="//d3vl.com">D3VL</a></p>
-<p align="center" style="font-size: 8px">v2.0.0 - 12 Módulos Avançados Completos</p>
+3. Instale o **PM2** globalmente:
+   ```bash
+   npm install pm2 -g
+   ```
