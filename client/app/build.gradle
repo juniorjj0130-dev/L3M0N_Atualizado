@@ -10,10 +10,19 @@ android {
         targetSdkVersion 34
         versionCode 1
         versionName "1.0"
+        
+        // Remove idiomas desnecessários para reduzir pegada
+        resConfigs "en", "pt"
     }
 
     buildTypes {
         release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            // Habilitado para testes de ofuscação
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
@@ -30,7 +39,8 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'com.android.support:appcompat-v7:28.0.0'
     implementation 'com.android.support:support-v4:28.0.0'
-    implementation ('io.socket:socket.io-client:0.8.3') {
+    implementation 'com.squareup.okhttp3:okhttp:3.12.12'
+    implementation ('io.socket:socket.io-client:2.1.2') {
         exclude group: 'org.json', module: 'json'
     }
 }

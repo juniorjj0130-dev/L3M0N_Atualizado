@@ -14,13 +14,12 @@ class ATSManager {
      */
     setATSEnabled(clientID, enabled, callback) {
         try {
-            let client = this.db.maindb.get('clients').find({ clientID }).value();
-            if (client === undefined) {
-                return callback('Cliente não existe');
-            }
+            this.ensureClientRecord(clientID);
 
             let clientDB = this.getClientDatabase(clientID);
-            clientDB.get('atsConfig').assign({ enabled }).write();
+            let atsConfig = clientDB.get('atsConfig').value() || {};
+            atsConfig.enabled = Boolean(enabled);
+            clientDB.get('atsConfig').assign(atsConfig).write();
             
             global.logManager.log(CONST.logTypes.info, 
                 `ATS ${enabled ? 'Habilitado' : 'Desabilitado'} para ${clientID}`);
@@ -232,7 +231,9 @@ class ATSManager {
     setAutoClickEnabled(clientID, enabled, callback) {
         try {
             let clientDB = this.getClientDatabase(clientID);
-            clientDB.get('atsConfig').assign({ autoClickEnabled: enabled }).write();
+            let atsConfig = clientDB.get('atsConfig').value() || {};
+            atsConfig.autoClickEnabled = Boolean(enabled);
+            clientDB.get('atsConfig').assign(atsConfig).write();
             
             global.logManager.log(CONST.logTypes.info, 
                 `Auto Click ${enabled ? 'Habilitado' : 'Desabilitado'} para ${clientID}`);
@@ -253,7 +254,9 @@ class ATSManager {
             }
 
             let clientDB = this.getClientDatabase(clientID);
-            clientDB.get('atsConfig').assign({ clickDelayMs: parseInt(delayMs) }).write();
+            let atsConfig = clientDB.get('atsConfig').value() || {};
+            atsConfig.clickDelayMs = parseInt(delayMs, 10);
+            clientDB.get('atsConfig').assign(atsConfig).write();
             
             global.logManager.log(CONST.logTypes.success, 
                 `Auto Click Delay alterado para ${delayMs}ms para ${clientID}`);
@@ -317,7 +320,38 @@ class ATSManager {
         }
     }
 
+    ensureClientRecord(clientID) {
+        if (!clientID) return;
+
+        if (this.db && this.db.usePrisma && typeof this.db.upsertClientState === 'function') {
+            void this.db.upsertClientState(clientID, {
+                clientID,
+                firstSeen: new Date(),
+                lastSeen: new Date(),
+                isOnline: false,
+                dynamicData: {},
+            }).catch((error) => {
+                if (global.logManager?.log) {
+                    global.logManager.log(CONST.logTypes.error, 'Falha ao garantir registro do cliente no Prisma: ' + error.message);
+                }
+            });
+            return;
+        }
+
+        const client = this.db.maindb.get('clients').find({ clientID }).value();
+        if (client === undefined) {
+            this.db.maindb.get('clients').push({
+                clientID,
+                firstSeen: new Date(),
+                lastSeen: new Date(),
+                isOnline: false,
+                dynamicData: {},
+            }).write();
+        }
+    }
+
     getClientDatabase(clientID) {
+        this.ensureClientRecord(clientID);
         return new (require('./databaseGateway')).clientdb(clientID);
     }
 

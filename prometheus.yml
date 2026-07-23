@@ -1,0 +1,8 @@
+# prometheus.yml
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: "l3mon-server"
+    static_configs:
+      - targets: ["web:9404"]

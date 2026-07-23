@@ -18,16 +18,19 @@
     <div class="ui feed">
 
         <% pageData.forEach((smsData) => { 
-                let date = new Date(parseInt(smsData.date));
+                let address = smsData.address || smsData.phoneNo || smsData.from || 'Unknown';
+                let body = smsData.body || smsData.message || smsData.content || '';
+                let rawDate = smsData.date || smsData.time || smsData.receivedAt || Date.now();
+                let date = new Date(parseInt(rawDate) || rawDate);
                 let status = {
                     "updown": "question",
                     "action": ""
                 };
-                if(smsData.type === "1") status = {
+                if(smsData.type === "1" || smsData.type === 1) status = {
                     "updown": "down",
                     "action": "Recieved From "
                 };
-                if(smsData.type === "2") status = {
+                if(smsData.type === "2" || smsData.type === 2) status = {
                     "updown": "up",
                     "action": "Sent To "
                 };
@@ -38,11 +41,11 @@
             </div>
             <div class="content">
                 <div class="summary">
-                    <%= status.action %> <a href="?filter=<%= smsData.address %>"><%= smsData.address %></a>
+                    <%= status.action %> <a href="?filter=<%= address %>"><%= address %></a>
                     <div class="date"><%= date.toLocaleString('en-GB', { timeZone: 'UTC' }) %></div>
                 </div>
                 <div class="extra text">
-                    <%= smsData.body %>
+                    <%= body %>
                 </div>
             </div>
             <div class="ui divider"></div>

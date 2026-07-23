@@ -1,0 +1,64 @@
+version: "3.8"
+
+services:
+  web:
+    build: .
+    ports:
+      - "8080:8080"
+      - "9404:9404" # Prometheus metrics
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=l3mon
+      - DB_USER=l3mon
+      - DB_PASSWORD=l3mon
+      - SPRING_PROFILES_ACTIVE=prod
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=l3mon
+      - POSTGRES_USER=l3mon
+      - POSTGRES_PASSWORD=l3mon
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  db-backup:
+    image: procs7/postgres-backup-s3:latest # Exemplo de imagem para backup automático
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_USER=l3mon
+      - POSTGRES_PASSWORD=l3mon
+      - POSTGRES_DB=l3mon
+      - SCHEDULE=@hourly
+      - BACKUP_KEEP_DAYS=7
+    volumes:
+      - ./backups:/backups
+    depends_on:
+      - db
+    restart: unless-stopped
+
+volumes:
+  db-data:

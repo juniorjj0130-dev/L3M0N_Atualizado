@@ -9,22 +9,27 @@
     "audit:fix": "npm audit fix",
     "outdated": "npm outdated",
     "update:safe": "npm update",
-    "security:check": "npm outdated && npm audit"
+    "security:check": "npm outdated && npm audit",
+    "maintenance:check": "npm outdated && npm audit --omit=dev"
   },
   "author": "D3VL",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^3.0.3",
-    "body-parser": "^1.19.0",
+    "body-parser": "^1.20.6",
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.4.2",
     "ejs": "^6.0.1",
-    "express": "^4.17.1",
+    "express": "^4.22.2",
     "express-rate-limit": "^8.6.0",
     "geoip-lite": "^2.0.3",
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
     "lowdb": "^1.0.0",
     "socket.io": "^4.8.3"
+  },
+  "devDependencies": {
+    "@prisma/client": "^5.22.0",
+    "prisma": "^5.22.0"
   }
 }

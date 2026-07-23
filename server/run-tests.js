@@ -9,6 +9,13 @@ const path = require('path');
 
 const testDir = path.join(__dirname, 'test');
 const testFiles = fs.readdirSync(testDir).filter(f => f.endsWith('.test.js'));
+const testDataDir = path.join(__dirname, '.test-data');
+
+fs.rmSync(testDataDir, { recursive: true, force: true });
+fs.mkdirSync(testDataDir, { recursive: true });
+
+process.env.L3MON_MAINDB_PATH = path.join(testDataDir, 'maindb.json');
+process.env.L3MON_DATA_DIR = path.join(testDataDir, 'clientData');
 
 console.log('\n========================================');
 console.log('    L3MON - Test Suite Runner');

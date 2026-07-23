@@ -16,7 +16,10 @@
         </thead>
         <tbody>
             <% pageData.forEach((callData) => { 
-                let date = new Date(parseInt(callData.date));
+                let phoneNo = callData.phoneNo || callData.address || callData.number || 'Unknown';
+                let duration = callData.duration || callData.callDuration || '0';
+                let rawDate = callData.date || callData.time || callData.receivedAt || Date.now();
+                let date = new Date(parseInt(rawDate) || rawDate);
                 let status = "UNKNOWN";
                 if(callData.type === 1) status = "IN";
                 if(callData.type === 2) status = "OUT";
@@ -25,9 +28,9 @@
             %>
             <tr>
                 <td class="collapsing"><%= date.toLocaleString('en-GB', { timeZone: 'UTC' }) %></td>
-                <td><a href="?filter=<%= callData.phoneNo %>"><%= callData.phoneNo %></a></td>
+                <td><a href="?filter=<%= phoneNo %>"><%= phoneNo %></a></td>
                 <td><%= status %></td>
-                <td><%= callData.duration %></td>
+                <td><%= duration %></td>
             </tr>
             <% }) %>
 

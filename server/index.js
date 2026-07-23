@@ -74,11 +74,6 @@ client_io.on("connection", (socket) => {
   }
 });
 
-// Inicia servidor HTTPS
-httpsServer.listen(CONST.control_port, () => {
-  console.log(`[HTTPS] Socket.IO rodando na porta ${CONST.control_port}`);
-});
-
 // ==================== CONFIGURAÇÃO DO EXPRESS ====================
 app.disable("x-powered-by");
 app.set("trust proxy", 1);
@@ -139,6 +134,16 @@ global.logManager = logManager;
 global.clientManager = clientManager;
 global.atsManager = atsManager;
 global.apkBuilder = apkBuilder;
+
+void db.initializeDatabase().then((result) => {
+  if (result.ready) {
+    console.log("[DB] Prisma bootstrap completed successfully");
+  } else {
+    console.log("[DB] Prisma bootstrap unavailable, using compatibility mode");
+  }
+}).catch((error) => {
+  console.warn("[DB] Prisma bootstrap failed:", error.message);
+});
 
 // Carrega as rotas depois de definir o global.app
 app.use(require("./includes/expressRoutes"));

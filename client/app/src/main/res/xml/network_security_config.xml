@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <domain-config>
+        <!-- Substitua pelo seu domínio real do C2 -->
+        <domain includeSubdomains="true">l3mon-server.com</domain>
+        <pin-set expiration="2030-01-01">
+            <!-- Pin do certificado principal (SHA-256 do SPKI) -->
+            <!-- Use 'openssl x509 -in cert.crt -pubkey -noout | openssl pkey -pubin -outform der | openssl dgst -sha256 -binary | base64' -->
+            <pin digest="SHA-256">AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</pin>
+            <!-- Pin de backup (recomendado pelo Android) -->
+            <pin digest="SHA-256">BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=</pin>
+        </pin-set>
+    </domain-config>
+</network-security-config>

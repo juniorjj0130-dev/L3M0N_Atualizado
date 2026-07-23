@@ -1,0 +1,14 @@
+target/
+client/
+.git/
+.gradle/
+.idea/
+.vscode/
+*.iml
+*.log
+docker-compose.yml
+Dockerfile
+README.md
+AGENTS.md
+LAB_SECURITY_CHECKLIST.md
+Screenshots/

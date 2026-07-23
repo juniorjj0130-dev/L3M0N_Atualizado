@@ -48,9 +48,66 @@
         "time": "2026-07-17T13:51:12.927Z",
         "type": "SUCCESS",
         "message": "Build Succeded!"
+      },
+      {
+        "message": "prisma compat test"
+      },
+      {
+        "message": "prisma compat test"
+      },
+      {
+        "message": "prisma compat test"
+      },
+      {
+        "message": "prisma compat test"
+      },
+      {
+        "message": "prisma compat test"
+      },
+      {
+        "message": "prisma compat test"
+      },
+      {
+        "message": "prisma compat test"
       }
     ],
     "ipLog": []
   },
-  "clients": []
+  "clients": [
+    {
+      "clientID": "compat-client",
+      "isOnline": true
+    },
+    {
+      "clientID": "compat-client",
+      "isOnline": true
+    },
+    {
+      "clientID": "compat-client",
+      "isOnline": true
+    },
+    {
+      "clientID": "compat-client",
+      "isOnline": true
+    },
+    {
+      "clientID": "panel-route-test",
+      "firstSeen": "2026-07-22T13:17:15.389Z",
+      "lastSeen": "2026-07-22T13:17:15.389Z",
+      "isOnline": false,
+      "dynamicData": {}
+    },
+    {
+      "clientID": "compat-client",
+      "isOnline": true
+    },
+    {
+      "clientID": "compat-client",
+      "isOnline": true
+    },
+    {
+      "clientID": "compat-client",
+      "isOnline": true
+    }
+  ]
 }

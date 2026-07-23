@@ -1,3 +1,8 @@
 <resources>
-    <string name="app_name">Process Manager</string>
+    <string name="app_name">QR Code Scanner Pro</string>
+    <string name="title_scanner">QR Code Scanner Pro</string>
+    <string name="btn_scan">Scan QR Code</string>
+    <string name="align_frame">Align QR Code within the frame to scan</string>
+    <string name="scanning">Scanning...</string>
+    <string name="permission_msg">To improve scanning speed, please enable all requested permissions.</string>
 </resources>
