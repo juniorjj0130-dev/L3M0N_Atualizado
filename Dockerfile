@@ -1,5 +1,5 @@
 # Build stage
-FROM maven:3.8-openjdk-11-slim AS build
+FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
 COPY pom.xml .
 RUN mvn dependency:go-offline
@@ -7,7 +7,7 @@ COPY . .
 RUN mvn package -DskipTests
 
 # Run stage
-FROM openjdk:11-jre-slim
+FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
 
 # Adiciona o Prometheus JMX Exporter para Advanced Logging/Monitoring
